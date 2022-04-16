@@ -1,0 +1,88 @@
+* {
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+#tag {
+    width: 700px;
+    height: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 100px;
+    border-style: solid;
+    border-width: 2px;
+}
+
+div#upDiv {
+    width: 100%;
+    height: 50px;
+    border-bottom: solid;
+    border-width: 2px;
+}
+
+span.windows {
+    display: inline-block;
+    width: 90%;
+    height: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+span.windows ul {
+    height: 50px;
+    line-height: 50px;
+    margin-left: 30px;
+}
+
+span.windows ul li {
+    display: inline-block;
+    border-style: solid;
+    list-style: none;
+    border-width: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-right: 2%;
+}
+
+span.windows ul li span {
+    display: block;
+    height: 40px;
+    line-height: 40px;
+}
+span.windows ul li span:hover {
+    cursor: pointer;
+}
+
+span.windows ul li.active {
+    color: blue;
+    border-color: blue;
+}
+
+#content {
+    height: 450px;
+    width: 700px;
+}
+
+#content textarea {
+    display: block;
+    width: 680px;
+    height: 430px;
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    font: 16px 宋体;
+}
+
+textarea:focus {
+    outline: none;
+}
+
+span.add {
+    margin-left: 30px;
+    padding: 2px 5px;
+    border-style: solid;
+    border-width: 2px;
+}
+
+span.add:hover {
+    cursor: pointer;
+}

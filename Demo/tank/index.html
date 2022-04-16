@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <style type="text/css">
+            #myCanvas {
+                margin: 0 auto;
+                height: 600px;
+                width: 1300px;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body id="body" onload="onload()">
+        <canvas id="myCanvas" height="500" width="1000">您的浏览器不支持canvas!</canvas>
+        <img id="tank" src="static/tank.jpeg" style="display: none" />
+        <script src="src/Event.js"></script>
+        <script src="src/utils.js"></script>
+        <script src="src/Interaction.js"></script>
+        <script src="src/Scene.js"></script>
+        <script src="src/Tank.js"></script>
+        <script src="src/main.js"></script>
+    </body>
+</html>

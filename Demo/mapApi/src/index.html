@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <style>
+            html,
+            body,
+            #container {
+                height: 90%;
+                width: 90%;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container" tabindex="0"></div>
+
+        <script src="https://webapi.amap.com/loader.js"></script>
+        <script>
+            var loadConfig = {
+                key: 'c95aa030717a7603334d130269dfa94b', //首次load key为必填
+                version: '2.0',
+                plugins: ['AMap.Scale', 'AMap.ToolBar'],
+            };
+
+            var map;
+            AMapLoader.load(loadConfig)
+                .then(AMap => {
+                    map = new AMap.Map('container');
+                    map.addControl(new AMap.Scale());
+                    map.addControl(new AMap.ToolBar());
+                    map.add(
+                        new AMap.Marker({
+                            position: map.getCenter(),
+                        })
+                    );
+                })
+                .catch(e => {
+                    console.error(e);
+                });
+        </script>
+    </body>
+</html>
