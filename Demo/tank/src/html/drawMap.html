@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>绘制地图</title>
+        <link rel="stylesheet" href="../dependency/index.css" />
+        <script src="../dependency/vue.js"></script>
+        <script src="../dependency/index.js"></script>
+        <link rel="stylesheet" type="text/css" href="../css/drawMap.css" />
+    </head>
+    <body>
+        <div id="app">
+            <span class="interaction">
+                <p class="logo">绘制地图</p>
+
+                <div class="penDiv">
+                    <p class="title">元素画笔</p>
+                    <el-radio-group v-model="radio" size="big" id="penRadioGroup">
+                        <el-radio label="1" border>备选项2</el-radio>
+                        <el-radio label="2" border>备选项2</el-radio>
+                        <el-radio label="3" border>备选项2</el-radio>
+                        <el-radio label="4" border>备选项2</el-radio>
+                    </el-radio-group>
+                </div>
+
+                <div class="input">
+                    <el-input v-model="input" placeholder="给地图起个名字吧~" />
+                </div>
+
+                <div class="submitDiv">
+                    <el-button type="primary">保存</el-button>
+                    <el-button>取消</el-button>
+                </div>
+            </span>
+            <span class="map"></span>
+        </div>
+        <script src="../js/drawMapPage/drawMap.js"></script>
+    </body>
+</html>

@@ -1,0 +1,76 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0 none;
+    vertical-align: top;
+}
+
+html,
+body,
+#app {
+    height: 100%;
+}
+
+.interaction {
+    float: left;
+    width: 18%;
+    height: 100%;
+    background-color: aqua;
+}
+
+.map {
+    float: right;
+    width: 82%;
+    height: 100%;
+    background-color: bisque;
+}
+.logo {
+    font-size: 30px;
+    margin-top: 20px;
+    margin-left: 20px;
+}
+.penDiv {
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 10px;
+    margin: 0 auto;
+    margin-top: 10px;
+    padding-left: 15px;
+    width: 80%;
+}
+.title {
+    font-size: 20px;
+    margin-top: 10px;
+}
+#penRadioGroup {
+    margin-top: 10px;
+}
+
+#penRadioGroup label {
+    width: 140px;
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+
+.input {
+    width: 80%;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+.input .el-input .el-input__inner {
+    height: 35px;
+}
+
+.submitDiv {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    width: 80%;
+}
+.submitDiv button {
+    float: right;
+    height: 35px;
+    padding: 8px 15px;
+    margin-left: 30px;
+}
