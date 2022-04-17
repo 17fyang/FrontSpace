@@ -5,24 +5,28 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
-
-        <style type="text/css">
-            #myCanvas {
-                margin: 0 auto;
-                height: 600px;
-                width: 1300px;
-                border: 1px solid black;
-            }
-        </style>
+        <link rel="stylesheet" type="text/css" href="src/css/index.css" />
     </head>
-    <body id="body" onload="onload()">
-        <canvas id="myCanvas" height="500" width="1000">您的浏览器不支持canvas!</canvas>
-        <img id="tank" src="static/tank.jpeg" style="display: none" />
-        <script src="src/Event.js"></script>
-        <script src="src/utils.js"></script>
-        <script src="src/Interaction.js"></script>
-        <script src="src/Scene.js"></script>
-        <script src="src/Tank.js"></script>
-        <script src="src/main.js"></script>
+    <body onkeydown="onKeyDown(event)">
+        <div class="gameBorder">
+            <div class="logoDiv">
+                <img src="static/logo.png" />
+            </div>
+            <div class="interactionDiv">
+                <div class="optionDiv">
+                    <span class="tankSpan"></span>
+                    <span class="wordSpan">绘制地图</span>
+                </div>
+                <div class="optionDiv">
+                    <span class="tankSpan"></span>
+                    <span class="wordSpan">选择地图</span>
+                </div>
+                <div class="optionDiv">
+                    <span class="tankSpan"><img class="tankImg" src="static/tank.png" /></span>
+                    <span class="wordSpan">开始游戏</span>
+                </div>
+            </div>
+        </div>
+        <script src="src/js/indexPage/Index.js"></script>
     </body>
 </html>
