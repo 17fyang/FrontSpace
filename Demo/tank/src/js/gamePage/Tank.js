@@ -88,8 +88,8 @@ class Bullet extends Entity {
     constructor(ctx, parentEntity, x, y, direct, speed) {
         super(ctx);
         this.parentEntity = parentEntity; //发射子弹的实体
-        this.width = 10; //子弹碰撞盒宽度
-        this.height = 10; //子弹碰撞盒高度
+        this.width = 5; //子弹碰撞盒宽度
+        this.height = 5; //子弹碰撞盒高度
 
         let realX = direct == DIRECT_UP || direct == DIRECT_DOWN ? x - this.width / 2 : x;
         let realY = direct == DIRECT_LEFT || direct == DIRECT_RIGHT ? y - this.height / 2 : y;
@@ -144,8 +144,8 @@ class Tank extends Entity {
     constructor(ctx, x, y, direct) {
         super(ctx);
         this.img = document.getElementById('tank');
-        this.width = 40;
-        this.height = 40;
+        this.width = 20;
+        this.height = 20;
         this.position = new Position(x, y, direct);
         this.speed = 1.0; //坦克移动速度
         this.keyOpera = new KeyOpera(); //键盘事件栈

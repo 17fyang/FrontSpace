@@ -40,5 +40,8 @@ function main(canvas) {
 
 function onload() {
     let canvas = document.getElementById('myCanvas');
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
     main(canvas);
 }

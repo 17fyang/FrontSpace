@@ -31,7 +31,7 @@ class AirWall extends SceneItem {}
  */
 class Wall extends SceneItem {
     constructor(x, y) {
-        super(x, y, 20, 20);
+        super(x, y, 10, 10);
     }
 
     /**
