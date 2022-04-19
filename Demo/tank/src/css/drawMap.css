@@ -27,7 +27,7 @@ body,
 .logo {
     font-size: 30px;
     margin-top: 20px;
-    margin-left: 20px;
+    margin-left: 30px;
 }
 .penDiv {
     border-style: solid;
@@ -36,7 +36,8 @@ body,
     margin: 0 auto;
     margin-top: 10px;
     padding-left: 15px;
-    width: 80%;
+    padding-right: 15px;
+    width: 65%;
 }
 .title {
     font-size: 20px;
@@ -47,7 +48,7 @@ body,
 }
 
 #penRadioGroup label {
-    width: 140px;
+    width: 85%;
     margin: 0 auto;
     margin-bottom: 10px;
 }

@@ -7,4 +7,4 @@ const CANVAS_HEIGHT = PIXEL_NUM * MAP_HEIGHT;
 
 //地图静态元素枚举
 const ITEM_NONE = -1;
-const ITEM_WALL = 1;
+const ITEM_BRICK = 1;

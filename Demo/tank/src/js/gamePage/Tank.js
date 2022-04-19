@@ -103,7 +103,7 @@ class Bullet extends Entity {
      */
     collideEvent(item) {
         //子弹如果撞到了墙则消失
-        if (item instanceof Wall || item instanceof AirWall) {
+        if (item instanceof Brick || item instanceof AirWall) {
             this.scene.removeEntity(this);
         }
         //子弹如果撞到了坦克则坦克和子弹都消失
@@ -144,8 +144,8 @@ class Tank extends Entity {
     constructor(ctx, x, y, direct) {
         super(ctx);
         this.img = document.getElementById('tank');
-        this.width = 20;
-        this.height = 20;
+        this.width = 4 * PIXEL_NUM; //坦克宽度：4个地图格子
+        this.height = 4 * PIXEL_NUM; //坦克高度：4个地图格子
         this.position = new Position(x, y, direct);
         this.speed = 1.0; //坦克移动速度
         this.keyOpera = new KeyOpera(); //键盘事件栈

@@ -63,7 +63,7 @@ class ItemCollideEvent {
     apply() {
         //子弹撞到墙则消失
         if (this.context.entity instanceof Bullet) {
-            if (this.item instanceof Wall || this.item instanceof AirWall) {
+            if (this.item instanceof Brick || this.item instanceof AirWall) {
                 this.context.allowMove = false;
                 this.context.entity.scene.removeEntity(this.context.entity);
             }
@@ -71,7 +71,7 @@ class ItemCollideEvent {
 
         //坦克撞到墙则不允许移动
         if (this.context.entity instanceof Tank) {
-            if (this.item instanceof Wall || this.item instanceof AirWall) {
+            if (this.item instanceof Brick || this.item instanceof AirWall) {
                 this.context.allowMove = false;
             }
         }
