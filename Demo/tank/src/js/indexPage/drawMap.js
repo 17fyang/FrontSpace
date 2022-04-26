@@ -1,7 +1,7 @@
 const DRAW_PIXEL_NUM = 2; //在绘制场景下，最小单元为2*2个地图格子
 
 var isDrawing = false; //画笔状态，鼠标左键是否处于按下状态
-var map = initMap(); //地图数据
+var tankMap = initMap(); //地图数据
 initHtml();
 initCanvas();
 
@@ -82,10 +82,40 @@ function onMouseMove(ctx, event) {
     let pen = parseInt(vueData.radio);
     for (let i = drawPoint.x * DRAW_PIXEL_NUM; i < (drawPoint.x + 1) * DRAW_PIXEL_NUM; i++) {
         for (let j = drawPoint.y * DRAW_PIXEL_NUM; j < (drawPoint.y + 1) * DRAW_PIXEL_NUM; j++) {
-            if (pen == ITEM_NONE || map[i][j] == ITEM_NONE) {
+            if (pen == ITEM_NONE || tankMap[i][j] == ITEM_NONE) {
+                tankMap[i][j] = pen;
                 let item = SceneItem.valueOfByType(pen, i, j);
                 item.draw(ctx);
             }
         }
+    }
+}
+
+function onSubmit(event) {
+    if (vueData.input == '') {
+        alert('请输入地图名字');
+        return;
+    }
+
+    uploadData = {
+        name: vueData.input,
+        map: JSON.stringify(tankMap),
+    };
+
+    let res = axios({
+        url: URL_UPLOAD_MAP,
+        method: 'post',
+        data: uploadData, // 携带数据
+    }).then(res => {
+        window.location.href = '../../index.html';
+    });
+}
+
+function onQuit(event) {
+    window.location.href = '../../index.html';
+}
+function onKeyDown(event) {
+    if (event.code == 'Escape') {
+        onQuit(event);
     }
 }

@@ -44,6 +44,8 @@ function onKeyDown(event) {
 function onEnter() {
     if (currentIdx == INDEX_DRAW_MAP) {
         window.location.href = 'src/html/drawMap.html';
+    } else if (currentIdx == INDEX_CHOICE_MAP) {
+        window.location.href = 'src/html/chooseMap.html';
     } else if (currentIdx == INDEX_START_GAME) {
         window.location.href = 'src/html/game.html';
     }
