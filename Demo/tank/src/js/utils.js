@@ -13,6 +13,18 @@ class Util {
             collision1[1] + collision1[3] > collision2[1]
         );
     }
+
+    /**
+     * 浅拷贝一份数组
+     * @param {*} arr
+     */
+    static copyArray(arr) {
+        let result = [];
+        for (let item of arr) {
+            result.push(item);
+        }
+        return result;
+    }
 }
 
 class MapUtil {

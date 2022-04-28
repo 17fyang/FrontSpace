@@ -45,12 +45,24 @@ class Entity {
     constructor(ctx) {
         this.ctx = ctx;
         this.scene = undefined;
+        this.tickContext = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
     }
 
     /**
      * 实体碰撞事件
      */
     collideEvent(item) {}
+
+    /**
+     *重置tick上下文对象
+     */
+    resetTickContext() {
+        this.tickContext = {
+            collision: this.tryMove(),
+            allowMove: true,
+            disappear: false,
+        };
+    }
 
     /**
      * 绘制实体
@@ -88,8 +100,8 @@ class Bullet extends Entity {
     constructor(ctx, parentEntity, x, y, direct, speed) {
         super(ctx);
         this.parentEntity = parentEntity; //发射子弹的实体
-        this.width = 5; //子弹碰撞盒宽度
-        this.height = 5; //子弹碰撞盒高度
+        this.width = 10; //子弹碰撞盒宽度
+        this.height = 10; //子弹碰撞盒高度
 
         let realX = direct == DIRECT_UP || direct == DIRECT_DOWN ? x - this.width / 2 : x;
         let realY = direct == DIRECT_LEFT || direct == DIRECT_RIGHT ? y - this.height / 2 : y;
