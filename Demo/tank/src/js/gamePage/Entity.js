@@ -35,6 +35,36 @@ class Position {
         }
     }
 
+    /**
+     * 返回修正之后的位置
+     * 目的是解决移动前后tick的位置跨过了某障碍物的情况，修正后的位置是移动前位置和障碍物的交界处
+     * @returns
+     */
+    fixLocation() {
+        //对当前格子做修正，如果当前位置已经是修正后的位置，返回undefined表示
+        let fixNow = MapUtil.sceneToCanvas(MapUtil.canvasToScene(this.location()));
+        if (fixNow.y == this.y && (this.direct == DIRECT_UP || this.direct == DIRECT_DOWN)) {
+            return undefined;
+        }
+        if (fixNow.x == this.x && (this.direct == DIRECT_LEFT || this.direct == DIRECT_RIGHT)) {
+            return undefined;
+        }
+
+        if (this.direct == DIRECT_UP) {
+            return { x: this.x, y: fixNow.y };
+        } else if (this.direct == DIRECT_LEFT) {
+            return { x: fixNow.x, y: this.y };
+        } else if (this.direct == DIRECT_DOWN) {
+            return { x: this.x, y: fixNow.y + PIXEL_NUM };
+        } else if (this.direct == DIRECT_RIGHT) {
+            return { x: fixNow.x + PIXEL_NUM, y: this.y };
+        }
+    }
+
+    location() {
+        return { x: this.x, y: this.y };
+    }
+
     locate(x, y) {
         this.x = x;
         this.y = y;
@@ -42,16 +72,10 @@ class Position {
 }
 
 class Entity {
-    constructor(ctx) {
-        this.ctx = ctx;
-        this.scene = undefined;
+    constructor() {
+        this.uuid = Util.uuid(); //生成uui
         this.tickContext = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
     }
-
-    /**
-     * 实体碰撞事件
-     */
-    collideEvent(item) {}
 
     /**
      *重置tick上下文对象
@@ -65,9 +89,21 @@ class Entity {
     }
 
     /**
+     * 获取实体当前的碰撞箱
+     */
+    collision() {
+        return [this.position.x, this.position.y, this.width, this.height];
+    }
+
+    /**
+     * 实体tick
+     */
+    tick() {}
+
+    /**
      * 绘制实体
      */
-    draw() {}
+    draw(ctx) {}
 
     /**
      * 尝试移动，返回尝试移动后的碰撞箱[x,y,width,height]
@@ -78,27 +114,12 @@ class Entity {
      * 移动实体
      * @returns
      */
-    move() {}
-
-    /**
-     * 获取实体当前的碰撞箱
-     */
-    collision() {
-        return [this.position.x, this.position.y, this.width, this.height];
-    }
-
-    /**
-     * 设置实体所在的场景
-     * @param {Scene} scene
-     */
-    setScene(scene) {
-        this.scene = scene;
-    }
+    move(x, y) {}
 }
 
 class Bullet extends Entity {
-    constructor(ctx, parentEntity, x, y, direct, speed) {
-        super(ctx);
+    constructor(parentEntity, x, y, direct, speed) {
+        super();
         this.parentEntity = parentEntity; //发射子弹的实体
         this.width = 10; //子弹碰撞盒宽度
         this.height = 10; //子弹碰撞盒高度
@@ -111,26 +132,11 @@ class Bullet extends Entity {
     }
 
     /**
-     * 实体碰撞事件
-     */
-    collideEvent(item) {
-        //子弹如果撞到了墙则消失
-        if (item instanceof Brick || item instanceof AirWall) {
-            this.scene.removeEntity(this);
-        }
-        //子弹如果撞到了坦克则坦克和子弹都消失
-        if (item instanceof Tank && item != this.parentEntity) {
-            this.scene.removeEntity(item);
-            this.scene.removeEntity(this);
-        }
-    }
-
-    /**
      * 绘制子弹实体
      */
-    draw() {
-        this.ctx.fillStyle = '#0d0402';
-        this.ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+    draw(ctx) {
+        ctx.fillStyle = '#0d0402';
+        ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
 
     /**
@@ -146,43 +152,31 @@ class Bullet extends Entity {
      * 移动实体
      * @returns
      */
-    move() {
-        let location = this.position.tryMove(this.speed);
-        this.position.locate(location[0], location[1]);
+    move(x, y) {
+        this.position.locate(x, y);
     }
 }
 
 class Tank extends Entity {
-    constructor(ctx, x, y, direct) {
-        super(ctx);
+    constructor(x, y, direct) {
+        super();
         this.img = document.getElementById('tank');
         this.width = 4 * PIXEL_NUM; //坦克宽度：4个地图格子
         this.height = 4 * PIXEL_NUM; //坦克高度：4个地图格子
         this.position = new Position(x, y, direct);
-        this.speed = 1.0; //坦克移动速度
+        this.speed = 1.2; //坦克移动速度
         this.keyOpera = new KeyOpera(); //键盘事件栈
     }
 
     /**
      * 绘制坦克
      */
-    draw() {
-        this.ctx.save();
-        this.ctx.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
-        this.ctx.rotate(this.position.direct.rotate);
-        this.ctx.drawImage(this.img, this.width / -2, this.height / -2, this.width, this.height);
-        this.ctx.restore();
-    }
-
-    /**
-     * 实体碰撞事件
-     */
-    collideEvent(item) {
-        //子弹如果撞到了坦克则坦克和子弹都消失
-        if (item instanceof Tank) {
-            this.scene.removeEntity(item);
-            this.scene.removeEntity(this);
-        }
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
+        ctx.rotate(this.position.direct.rotate);
+        ctx.drawImage(this.img, this.width / -2, this.height / -2, this.width, this.height);
+        ctx.restore();
     }
 
     /**
@@ -197,9 +191,39 @@ class Tank extends Entity {
      * 移动
      * @returns
      */
-    move() {
-        let location = this.position.tryMove(this.speed);
-        this.position.locate(location[0], location[1]);
+    move(x, y) {
+        this.position.locate(x, y);
+    }
+    /**
+     * 控制移动
+     * @param {*} direct
+     */
+    moveControl(direct, moving) {
+        if (direct != undefined) {
+            this.position.direct = direct;
+        }
+        if (moving != undefined) {
+            this.position.moving = moving;
+        }
+    }
+
+    /**
+     * 修正TickContext中的实体当前位置
+     * 目的是解决移动前后tick的位置跨过了某障碍物的情况，修正后的位置是移动前位置和障碍物的交界处
+     * @returns
+     */
+    fixTickContextLocation() {
+        let fix = this.position.fixLocation();
+
+        if (fix == undefined) {
+            //不需要修正
+            this.tickContext.allowMove = false;
+        } else {
+            //需要修正
+            this.tickContext.allowMove = true;
+            this.tickContext.collision[0] = fix.x;
+            this.tickContext.collision[1] = fix.y;
+        }
     }
 
     /**
@@ -217,16 +241,17 @@ class Tank extends Entity {
         }
 
         let bullet = new Bullet(
-            this.ctx,
             this,
             bulletPosition[0],
             bulletPosition[1],
             this.position.direct,
             2.0
         );
-        this.scene.addEntity(bullet);
+        entityService.addEntity(bullet);
     }
+}
 
+class PlayerTank extends Tank {
     /**
      * 键盘按下监听
      * @param {*} event
@@ -236,13 +261,7 @@ class Tank extends Entity {
             this.keyOpera.onKeyDown(event.code);
 
             let direct = this.keyOpera.locateDirect();
-            if (direct != undefined) {
-                this.position.direct = direct;
-            }
-
-            if (!this.keyOpera.isEmpty()) {
-                this.position.moving = true;
-            }
+            this.moveControl(direct, true);
         }
     }
 
@@ -255,13 +274,9 @@ class Tank extends Entity {
             this.keyOpera.onKeyUp(event.code);
 
             let direct = this.keyOpera.locateDirect();
-            if (direct != undefined) {
-                this.position.direct = direct;
-            }
-
-            if (this.keyOpera.isEmpty()) {
-                this.position.moving = false;
-            }
+            this.moveControl(direct, !this.keyOpera.isEmpty());
         }
     }
 }
+
+class AiTank extends Tank {}

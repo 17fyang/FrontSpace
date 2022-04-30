@@ -25,14 +25,34 @@ class Util {
         }
         return result;
     }
+
+    /**
+     * 生成UUID
+     * @returns
+     */
+    static uuid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (Math.random() * 16) | 0,
+                v = c == 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+        });
+    }
 }
 
 class MapUtil {
-    static canvasToMap([x, y]) {
-        return { x: parseInt(x / PIXEL_NUM), y: parseInt(y / PIXEL_NUM) };
+    static canvasToScene(canvas) {
+        return { x: parseInt(canvas.x / PIXEL_NUM), y: parseInt(canvas.y / PIXEL_NUM) };
     }
-    static mapToCanvas([x, y]) {
-        return { x: parseInt(x * PIXEL_NUM), y: parseInt(y * PIXEL_NUM) };
+    static sceneToCanvas(scene) {
+        return { x: parseInt(scene.x * PIXEL_NUM), y: parseInt(scene.y * PIXEL_NUM) };
+    }
+
+    static canvasToAi(canvas) {
+        let scene = MapUtil.canvasToScene(canvas);
+        return MapUtil.sceneToAi(scene);
+    }
+    static sceneToAi(scene) {
+        return { x: parseInt(scene.x / 4), y: parseInt(scene.y / 4) };
     }
 
     static canvasPoint(canvas, offsetX, offsetY) {

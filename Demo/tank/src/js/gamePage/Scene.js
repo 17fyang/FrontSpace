@@ -1,3 +1,4 @@
+const NONE_COLLISION = [0, 0, 0, 0];
 class SceneItem {
     constructor(x, y, width, height) {
         this.x = x;
@@ -31,7 +32,7 @@ class SceneItem {
      * @param {Aryay} collision
      */
     collision(collision) {
-        let canvas = MapUtil.mapToCanvas([this.x, this.y]);
+        let canvas = MapUtil.sceneToCanvas({ x: this.x, y: this.y });
         return [canvas.x, canvas.y, this.width, this.height];
     }
 }
@@ -44,7 +45,7 @@ class Air extends SceneItem {
      * @param {Aryay} collision
      */
     collision(collision) {
-        return [0, 0, 0, 0];
+        return NONE_COLLISION;
     }
 
     /**
@@ -52,7 +53,7 @@ class Air extends SceneItem {
      * @param {CanvasRenderingContext2D} ctx
      */
     draw(ctx) {
-        let canvas = MapUtil.mapToCanvas([this.x, this.y]);
+        let canvas = MapUtil.sceneToCanvas({ x: this.x, y: this.y });
         ctx.clearRect(canvas.x, canvas.y, this.width, this.height);
     }
 }
@@ -70,7 +71,7 @@ class Brick extends SceneItem {
      */
     draw(ctx) {
         let border = parseInt(PIXEL_NUM / 5);
-        let canvas = MapUtil.mapToCanvas([this.x, this.y]);
+        let canvas = MapUtil.sceneToCanvas({ x: this.x, y: this.y });
         if (this.x % 2 == this.y % 2) {
             //左上角和右下角砖块形状
             ctx.fillStyle = Brick.BRICK_SHADOW;
@@ -104,13 +105,9 @@ class Brick extends SceneItem {
 }
 
 class Scene {
-    constructor(ctx, width, height) {
-        this.ctx = ctx;
+    constructor(width, height) {
         this.width = width;
         this.height = height;
-        this.sceneItemMap = this.initMap(); //场景静态元素Map索引
-        this.sceneItemList = []; //场景静态元素List索引
-        this.entityList = []; //所有实体
 
         this.borderList = [
             [-1, 0, 1, this.height],
@@ -127,92 +124,29 @@ class Scene {
      * 场景初始化
      */
     init() {
-        for (let i = 0; i < 10; i++) {
-            this.addSceneItem(new Brick(10, 10 + i));
-            this.addSceneItem(new Brick(11, 10 + i));
-            this.addSceneItem(new Brick(12, 10 + i));
-            this.addSceneItem(new Brick(13, 10 + i));
+        for (let i = 0; i < 20; i++) {
+            sceneService.addSceneItem(new Brick(10, 10 + i));
+            sceneService.addSceneItem(new Brick(11, 10 + i));
+            sceneService.addSceneItem(new Brick(12, 10 + i));
+            sceneService.addSceneItem(new Brick(13, 10 + i));
+
+            sceneService.addSceneItem(new Brick(18, i));
+            sceneService.addSceneItem(new Brick(10 + i, 30));
         }
-    }
-
-    /**
-     * 初始化空的地图数据
-     */
-    initMap() {
-        let map = [];
-        for (let i = 0; i < MAP_WIDTH; i++) {
-            map[i] = [];
-            for (let j = 0; j < MAP_HEIGHT; j++) {
-                map[i][j] = undefined;
-            }
-        }
-        return map;
-    }
-
-    /**
-     * 给场景添加实体
-     * @param {Entity} entity
-     */
-    addEntity(entity) {
-        entity.setScene(this);
-        this.entityList.push(entity);
-    }
-
-    /**
-     * 从场景中移除实体
-     * @param {Entity} entity
-     */
-    removeEntity(entity) {
-        let idx = this.entityList.indexOf(entity);
-        if (idx >= 0) {
-            this.entityList.splice(idx, 1);
-        }
-    }
-
-    /**
-     *给场景添加静态元素
-     * @param {SceneItem} item
-     */
-    addSceneItem(item) {
-        this.sceneItemMap[item.x][item.y] = item;
-        this.sceneItemList.push(item);
-    }
-
-    /**
-     *  移除场景中的静态元素
-     * @param {SceneItem} item
-     */
-    removeSceneItem(item) {
-        this.sceneItemMap[item.x][item.y] = undefined;
-
-        let idx = this.sceneItemList.indexOf(item);
-        if (idx >= 0) {
-            this.sceneItemList.splice(idx, 1);
-        }
-    }
-
-    /**
-     * 查找场景中的静态元素
-     * @param {Number} x
-     * @param {Number} y
-     * @returns
-     */
-    getSceneItem(x, y) {
-        return this.sceneItemMap[x][y];
     }
 
     /**
      * 绘制场景
      */
-    draw() {
+    draw(ctx) {
         //绘制静态元素
-        for (let wall of this.sceneItemList) {
-            wall.draw(this.ctx);
+        for (let wall of sceneService.sceneItemList) {
+            wall.draw(ctx);
         }
 
         //绘制实体
-        for (let entity of this.entityList) {
-            entity.draw();
+        for (let entity of entityService.entityList) {
+            entity.draw(ctx);
         }
     }
 
@@ -221,56 +155,59 @@ class Scene {
      */
     tickCollide() {
         //重置tick上下文
-        for (let entity of this.entityList) {
+        for (let entity of entityService.entityList) {
             entity.resetTickContext();
         }
-        for (let item of this.sceneItemList) {
+        for (let item of sceneService.sceneItemList) {
             item.resetTickContext();
         }
 
         //计算实体碰撞情况
-        for (let i = 0; i < this.entityList.length; i++) {
-            let entity = this.entityList[i];
+        for (let i = 0; i < entityService.entityList.length; i++) {
+            let entity = entityService.entityList[i];
+
+            //处理该实体tick
+            entity.tick();
 
             //计算场景中实体和边界碰撞情况
             for (let border of this.borderList) {
                 if (Util.collisionCheck2D(border, entity.tickContext.collision)) {
                     let event = new BorderCollideEvent(entity, border);
-                    EventHandler.handle(event);
+                    eventHandler.handle(event);
                 }
             }
 
             //计算场景中的实体和静态元素碰撞情况
-            for (let item of this.sceneItemList) {
+            for (let item of sceneService.sceneItemList) {
                 if (checkContextCollision(entity, item)) {
                     let event = new ItemCollideEvent(entity, item);
-                    EventHandler.handle(event);
+                    eventHandler.handle(event);
                 }
             }
 
             //计算场景中的实体和实体碰撞情况
-            for (let j = i + 1; j < this.entityList.length; j++) {
-                let otherEntity = this.entityList[j];
+            for (let j = i + 1; j < entityService.entityList.length; j++) {
+                let otherEntity = entityService.entityList[j];
                 if (checkContextCollision(entity, otherEntity)) {
                     let event = new EntityCollideEvent(entity, otherEntity);
-                    EventHandler.handle(event);
+                    eventHandler.handle(event);
                 }
             }
         }
 
         //处理实体状态生效
-        for (let entity of Util.copyArray(this.entityList)) {
+        for (let entity of Util.copyArray(entityService.entityList)) {
             if (entity.tickContext.disappear) {
-                this.removeEntity(entity);
+                entityService.removeEntity(entity);
             }
             if (entity.tickContext.allowMove) {
-                entity.move();
+                entity.move(entity.tickContext.collision[0], entity.tickContext.collision[1]);
             }
         }
         //处理静态元素状态生效
-        for (let item of Util.copyArray(this.sceneItemList)) {
+        for (let item of Util.copyArray(sceneService.sceneItemList)) {
             if (item.tickContext.disappear) {
-                this.removeSceneItem(item);
+                sceneService.removeSceneItem(item);
             }
         }
 

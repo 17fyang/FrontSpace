@@ -62,17 +62,18 @@ class BorderCollideEvent extends Event {
         this.border = border;
     }
     apply() {
-        //实体撞到了边界，实体不允许移动
-        this.entity.tickContext.allowMove = false;
-        //子弹撞到了边界，子弹消失
         if (this.entity instanceof Bullet) {
+            //子弹撞到了边界，子弹消失
             this.entity.tickContext.disappear = true;
+        } else if (this.entity instanceof Tank) {
+            //坦克撞到边界，需要修正下一tick坦克的位置
+            this.entity.fixTickContextLocation();
         }
     }
 }
 
 /**
- * 实体和静态元素碰撞事件
+ * 实体和静态元素的碰撞事件
  */
 class ItemCollideEvent extends Event {
     constructor(entity, item) {
@@ -95,10 +96,10 @@ class ItemCollideEvent extends Event {
             }
         }
 
-        //坦克撞到墙，不允许移动
+        //坦克撞到墙，需要修正下一tick坦克的位置
         if (this.entity instanceof Tank) {
             if (this.item instanceof Brick) {
-                this.entity.tickContext.allowMove = false;
+                this.entity.fixTickContextLocation();
             }
         }
     }
@@ -112,11 +113,11 @@ class ItemCollideEvent extends Event {
     relocateItem(x, y, direct) {
         let candidate = [];
         if (direct == DIRECT_LEFT || direct == DIRECT_RIGHT) {
-            candidate.push(this.scene.getSceneItem(x, parseInt(y / 2) * 2));
-            candidate.push(this.scene.getSceneItem(x, parseInt(y / 2) * 2 + 1));
+            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2));
+            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2 + 1));
         } else if (direct == DIRECT_UP || direct == DIRECT_DOWN) {
-            candidate.push(this.scene.getSceneItem(parseInt(x / 2) * 2, y));
-            candidate.push(this.scene.getSceneItem(parseInt(x / 2) * 2 + 1, y));
+            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2, y));
+            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2 + 1, y));
         }
 
         let itemList = [];
@@ -129,12 +130,55 @@ class ItemCollideEvent extends Event {
     }
 }
 
-class EventHandler {
+class EventHandlerClass {
+    constructor() {
+        this.itemCollideEventListener = [];
+        this.borderCollideEventListener = [];
+    }
+
     /**
      * 处理一个事件
      * @param {Event} event
      */
-    static handle(event) {
+    handle(event) {
         event.apply();
+        if (event instanceof ItemCollideEvent) {
+            console.log(event);
+        }
+        this.handleAsync(event);
+    }
+
+    /**
+     * 异步处理一个事件
+     * @param {Event} event
+     */
+    handleAsync(event) {
+        setTimeout(() => {
+            if (event instanceof ItemCollideEvent) {
+                let asyncListener = this.itemCollideEventListener[event.entity.uuid];
+                if (asyncListener != undefined) {
+                    asyncListener(event);
+                }
+            } else if (event instanceof BorderCollideEvent) {
+                let asyncListener = this.borderCollideEventListener[event.entity.uuid];
+                if (asyncListener != undefined) {
+                    asyncListener(event);
+                }
+            }
+        }, 0);
+    }
+
+    removeAllListener(entity) {
+        this.itemCollideEventListener[entity.uuid] = undefined;
+        this.borderCollideEventListener[entity.uuid] = undefined;
+    }
+
+    addItemCollideEventListener(entity, handler) {
+        this.itemCollideEventListener[entity.uuid] = handler;
+    }
+
+    addBorderCollideEventListener(entity, handler) {
+        this.borderCollideEventListener[entity.uuid] = handler;
     }
 }
+const eventHandler = new EventHandlerClass();

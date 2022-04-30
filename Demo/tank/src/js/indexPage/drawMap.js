@@ -72,7 +72,7 @@ function onMouseMove(ctx, event) {
     //鼠标在canvas对象上的位置
     let canvasPoint = MapUtil.canvasPoint(ctx.canvas, event.offsetX, event.offsetY);
     //鼠标位置对应的地图格子
-    let mapPoint = MapUtil.canvasToMap([canvasPoint.x, canvasPoint.y]);
+    let mapPoint = MapUtil.canvasToScene({ x: canvasPoint.x, y: canvasPoint.y });
     //鼠标位置对应的最小绘制单元格子
     let drawPoint = {
         x: parseInt(mapPoint.x / DRAW_PIXEL_NUM),

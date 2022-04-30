@@ -18,9 +18,12 @@
                 height: 100%;
                 width: 100%;
             }
+
             #myCanvas {
+                position: relative;
                 height: 100%;
-                width: 100%;
+                width: 70%;
+                left: 15%;
             }
         </style>
     </head>
@@ -29,10 +32,12 @@
         <img id="tank" src="../../static/tank.png" style="display: none" />
         <script src="../js/Common.js"></script>
         <script src="../js/utils.js"></script>
+        <script src="../js/gamePage/Service.js"></script>
+        <script src="../js/gamePage/AI.js"></script>
         <script src="../js/gamePage/Event.js"></script>
         <script src="../js/gamePage/Interaction.js"></script>
         <script src="../js/gamePage/Scene.js"></script>
-        <script src="../js/gamePage/Tank.js"></script>
+        <script src="../js/gamePage/Entity.js"></script>
         <script src="../js/gamePage/main.js"></script>
     </body>
 </html>

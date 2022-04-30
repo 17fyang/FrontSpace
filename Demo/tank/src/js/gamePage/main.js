@@ -3,12 +3,17 @@ function main(canvas) {
     let ctx = canvas.getContext('2d');
 
     //创建场景对象
-    let scene = new Scene(ctx, canvas.width, canvas.height);
+    let scene = new Scene(canvas.width, canvas.height);
 
     //创建玩家坦克对象
-    let tank = new Tank(ctx, 500, 250, DIRECT_UP);
+    let tank = new PlayerTank(500, 250, DIRECT_UP);
+
+    //创建ai地图对象
+    let aiMap = new AiMap(sceneService.sceneItemMap);
     //创建AI坦克对象
-    let aiTank = new Tank(ctx, 100, 250, DIRECT_UP);
+    let aiTank = new AiTank(200, 250, DIRECT_UP);
+    //创建坦克AI行为对象
+    let tankAi = new TankAi(aiMap, aiTank);
 
     //给玩家坦克添加键盘和鼠标监听
     let body = document.getElementById('body');
@@ -23,17 +28,20 @@ function main(canvas) {
     });
 
     //把坦克添加到场景中
-    scene.addEntity(tank);
-    scene.addEntity(aiTank);
+    entityService.addEntity(tank);
+    entityService.addEntity(aiTank);
 
     //实现帧动画
     window.requestAnimationFrame(function draw() {
         //清空所有画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        //ai tick
+        tankAi.tick();
+
         //重绘场景
         scene.tickCollide();
-        scene.draw();
+        scene.draw(ctx);
         window.requestAnimationFrame(draw);
     });
 }
