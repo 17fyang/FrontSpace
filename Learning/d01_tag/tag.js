@@ -37,7 +37,6 @@ class Tag {
 
     init(id) {
         this.root = document.querySelector(id);
-        console.log(this.root);
         this.contentTextare = this.root.querySelector('#content textarea');
         var itemSpanList = this.root.querySelectorAll('span.windows ul li ');
 

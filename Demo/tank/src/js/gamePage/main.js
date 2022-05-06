@@ -11,7 +11,7 @@ function main(canvas) {
     //创建ai地图对象
     let aiMap = new AiMap(sceneService.sceneItemMap);
     //创建AI坦克对象
-    let aiTank = new AiTank(200, 250, DIRECT_UP);
+    let aiTank = new AiTank(200, 100, DIRECT_UP);
     //创建坦克AI行为对象
     let tankAi = new TankAi(aiMap, aiTank);
 
@@ -31,17 +31,21 @@ function main(canvas) {
     entityService.addEntity(tank);
     entityService.addEntity(aiTank);
 
+    //添加AI到Service管理
+    aiSercice.addAi(tankAi);
+
     //实现帧动画
     window.requestAnimationFrame(function draw() {
         //清空所有画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        //ai tick
-        tankAi.tick();
+        //场景tick
+        scene.tick();
 
-        //重绘场景
-        scene.tickCollide();
+        //场景重绘
         scene.draw(ctx);
+
+        //下一帧
         window.requestAnimationFrame(draw);
     });
 }

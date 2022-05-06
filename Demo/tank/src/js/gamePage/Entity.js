@@ -40,7 +40,7 @@ class Position {
      * 目的是解决移动前后tick的位置跨过了某障碍物的情况，修正后的位置是移动前位置和障碍物的交界处
      * @returns
      */
-    fixLocation() {
+    fixDirectLocation() {
         //对当前格子做修正，如果当前位置已经是修正后的位置，返回undefined表示
         let fixNow = MapUtil.sceneToCanvas(MapUtil.canvasToScene(this.location()));
         if (fixNow.y == this.y && (this.direct == DIRECT_UP || this.direct == DIRECT_DOWN)) {
@@ -212,17 +212,17 @@ class Tank extends Entity {
      * 目的是解决移动前后tick的位置跨过了某障碍物的情况，修正后的位置是移动前位置和障碍物的交界处
      * @returns
      */
-    fixTickContextLocation() {
-        let fix = this.position.fixLocation();
+    fixDirectLocation() {
+        let fix = this.position.fixDirectLocation();
 
         if (fix == undefined) {
             //不需要修正
-            this.tickContext.allowMove = false;
+            return false;
         } else {
             //需要修正
-            this.tickContext.allowMove = true;
             this.tickContext.collision[0] = fix.x;
             this.tickContext.collision[1] = fix.y;
+            return true;
         }
     }
 

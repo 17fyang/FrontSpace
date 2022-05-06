@@ -5,7 +5,7 @@ class Util {
      * @param {Array} collision2
      * @returns
      */
-    static collisionCheck2D(collision1, collision2) {
+    static collideCheck(collision1, collision2) {
         return (
             collision1[0] < collision2[0] + collision2[2] &&
             collision1[1] < collision2[1] + collision2[3] &&
@@ -45,14 +45,6 @@ class MapUtil {
     }
     static sceneToCanvas(scene) {
         return { x: parseInt(scene.x * PIXEL_NUM), y: parseInt(scene.y * PIXEL_NUM) };
-    }
-
-    static canvasToAi(canvas) {
-        let scene = MapUtil.canvasToScene(canvas);
-        return MapUtil.sceneToAi(scene);
-    }
-    static sceneToAi(scene) {
-        return { x: parseInt(scene.x / 4), y: parseInt(scene.y / 4) };
     }
 
     static canvasPoint(canvas, offsetX, offsetY) {

@@ -27,7 +27,6 @@ function setTankIndex(nextIdx) {
  * @param {KeyboardEvent} event
  */
 function onKeyDown(event) {
-    console.log(event);
     let code = event.code;
 
     if (code == 'KeyW' || code == 'ArrowUp') {

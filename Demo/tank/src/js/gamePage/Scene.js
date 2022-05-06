@@ -151,9 +151,9 @@ class Scene {
     }
 
     /**
-     * 计算场景碰撞并tick
+     * 场景tick
      */
-    tickCollide() {
+    tick() {
         //重置tick上下文
         for (let entity of entityService.entityList) {
             entity.resetTickContext();
@@ -171,7 +171,7 @@ class Scene {
 
             //计算场景中实体和边界碰撞情况
             for (let border of this.borderList) {
-                if (Util.collisionCheck2D(border, entity.tickContext.collision)) {
+                if (Util.collideCheck(border, entity.tickContext.collision)) {
                     let event = new BorderCollideEvent(entity, border);
                     eventHandler.handle(event);
                 }
@@ -179,20 +179,26 @@ class Scene {
 
             //计算场景中的实体和静态元素碰撞情况
             for (let item of sceneService.sceneItemList) {
-                if (checkContextCollision(entity, item)) {
+                if (Util.collideCheck(entity.tickContext.collision, item.tickContext.collision)) {
                     let event = new ItemCollideEvent(entity, item);
                     eventHandler.handle(event);
                 }
             }
 
             //计算场景中的实体和实体碰撞情况
-            for (let j = i + 1; j < entityService.entityList.length; j++) {
-                let otherEntity = entityService.entityList[j];
-                if (checkContextCollision(entity, otherEntity)) {
+            for (let otherEntity of entityService.entityList) {
+                let tickCollision = entity.tickContext.collision;
+                let otherNowCollision = otherEntity.collision();
+                if (entity != otherEntity && Util.collideCheck(tickCollision, otherNowCollision)) {
                     let event = new EntityCollideEvent(entity, otherEntity);
                     eventHandler.handle(event);
                 }
             }
+        }
+
+        //ai tick
+        for (let tankAi of aiSercice.aiList) {
+            tankAi.tick();
         }
 
         //处理实体状态生效
@@ -209,16 +215,6 @@ class Scene {
             if (item.tickContext.disappear) {
                 sceneService.removeSceneItem(item);
             }
-        }
-
-        /**
-         * 校验两个obj对应的TickContext是否发生了碰撞
-         * @param {*} obj1
-         * @param {*} obj2
-         * @returns
-         */
-        function checkContextCollision(obj1, obj2) {
-            return Util.collisionCheck2D(obj1.tickContext.collision, obj2.tickContext.collision);
         }
     }
 }

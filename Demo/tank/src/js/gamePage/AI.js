@@ -1,6 +1,9 @@
 const MAP_REACHABLE = 0;
 const MAP_UNRECHABLE = 1;
 
+const TANK_WIDTH = 4; //坦克宽度：4个地图格子
+const TANK_HEIGHT = 4; //坦克高度：4个地图格子
+
 class AiGrid {
     constructor(x, y, type) {
         this.x = x;
@@ -49,20 +52,13 @@ class AiMap {
             for (let j = 0; j < sceneMap[i].length; j++) {
                 let item = sceneMap[i][j];
 
-                let aiLoc = MapUtil.sceneToAi({ x: i, y: j });
-                if (this.map[aiLoc.x] == undefined) {
-                    this.map[aiLoc.x] = [];
+                if (this.map[i] == undefined) {
+                    this.map[i] = [];
                 }
 
                 let hasCollision = item != undefined && item.collision() != NONE_COLLISION;
                 let gridType = hasCollision ? MAP_UNRECHABLE : MAP_REACHABLE;
-                if (this.map[aiLoc.x][aiLoc.y] == undefined) {
-                    //aiMap上没有这个aiGrid则创建一个
-                    this.map[aiLoc.x][aiLoc.y] = new AiGrid(aiLoc.x, aiLoc.y, gridType);
-                } else if (gridType == MAP_UNRECHABLE) {
-                    //aiMap上有这个aiGrid则校验格子对应场景格子是否有任意一个不可达
-                    this.map[aiLoc.x][aiLoc.y].type = gridType;
-                }
+                this.map[i][j] = new AiGrid(i, j, gridType);
             }
         }
     }
@@ -102,27 +98,43 @@ class AiMap {
     arroundGrid(x, y) {
         let arroundList = [];
         let candidate = [
-            this.get(x - 1, y),
-            this.get(x + 1, y),
-            this.get(x, y - 1),
-            this.get(x, y + 1),
+            [x - 1, y],
+            [x + 1, y],
+            [x, y - 1],
+            [x, y + 1],
         ];
+        //TODO 想法记录：
+        //1、怎么处理两个实体相撞？真实遍历实体列表，只处理调用方实体，用调用方的nextTick和被调用方的tick比较
+        //2、怎么让坦克按路径走，判断nowTick和nextTick是否在同一个格子，否：判断nextTick是否在下个路径格子中，否：判断是否被fix过，是：moveReact
 
-        for (let grid of candidate) {
-            if (grid != undefined && grid.reachable()) {
-                arroundList.push(grid);
+        for (let point of candidate) {
+            if (tankReachable(this, TANK_HEIGHT, TANK_WIDTH, point[0], point[1])) {
+                let grid = this.get(point[0], point[1]);
+                if (grid != undefined) {
+                    arroundList.push(grid);
+                }
             }
         }
         return arroundList;
+
+        //到达一个格子指的是坦克左上角到达一个格子，一个格子是否能到达的判定方法：坦克走过之后新的坦克位置格子全都是可到达的
+        function tankReachable(aiMap, height, width, x, y) {
+            for (let i = x; i < x + width; i++) {
+                for (let j = y; j < y + height; j++) {
+                    let grid = aiMap.get(i, j);
+                    if (grid == undefined || !grid.reachable()) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
     }
 }
 
 class TankAi {
     constructor(aiMap, tank) {
         this.aiMap = aiMap;
-
-        //默认ai坦克一直都是在移动的
-        tank.position.moving = true;
         this.tank = tank;
         this.tickTime = 0;
         this.futureRoad = []; //坦克的决策路径[AiGrid]
@@ -134,35 +146,36 @@ class TankAi {
         );
 
         //初始时做一次决策并做一次移动反应
-        while (this.futureRoad.length == 0) {
-            this.decisionTick();
-            this.moveReact();
-        }
+        this.makeDecision();
     }
 
     tick() {
         this.tickTime++;
 
         //前面没路走了或者时间到了做一次决策
-        while (this.futureRoad.length == 0 || this.tickTime >= 1000) {
-            this.decisionTick();
-            this.moveReact();
+        if (this.futureRoad.length == 0 || this.tickTime >= 1000) {
+            this.makeDecision();
             this.tickTime = 0;
         }
 
-        let nextGrid = this.futureRoad[0];
-        let tankLocation = MapUtil.canvasToAi(this.tank.position.location());
-        if (nextGrid.x == tankLocation.x && nextGrid.y == tankLocation.y) {
-            this.futureRoad.shift();
-        }
+        let nowLocation = MapUtil.canvasToScene(this.tank.position.location());
+        let nextCollision = this.tank.tickContext.collision;
+        let nextLocation = MapUtil.canvasToScene({ x: nextCollision[0], y: nextCollision[1] });
+        let futureGrid = this.futureRoad[0];
 
-        //TODO 如果下一个格子不在坦克的行驶方向上，需要做一次移动反应
-
-        //TODO 坦克有可能到不了那个点就拐弯了，要清除决策
-        if (nextGrid.x != tankLocation.x && nextGrid.y != tankLocation.y) {
-            this.decisionTick();
+        if (nowLocation.x == nextLocation.x && nowLocation.y == nextLocation.y) {
+            //如果当前tick和下一tick处于同个格子，则表示坦克到达了这个格子
+            if (futureGrid.x == nowLocation.x && futureGrid.y == nowLocation.y) {
+                this.futureRoad.shift();
+            }
+        } else if (nextLocation.x == futureGrid.x && nextLocation.y == futureGrid.y) {
+            //如果下一tick和规划路线的下个格子相同，则表示坦克按规划路线前进
+            //TODO 处理前进不成功的情况，既shift掉了，但是下一tick坦克被挡住了
+            return;
+        } else if (nextLocation.x != futureGrid.x || nextLocation.y != futureGrid.y) {
+            //如果下一个格子不在坦克的行驶方向上，需要做一次移动反应
+            this.tank.fixDirectLocation();
             this.moveReact();
-            this.tickTime = 0;
         }
     }
 
@@ -171,44 +184,53 @@ class TankAi {
      */
     moveReact() {
         let nextGrid = this.futureRoad[0];
-        let tankLocation = MapUtil.canvasToAi(this.tank.position.location());
+        let tankLocation = MapUtil.canvasToScene(this.tank.position.location());
 
         let direct = DIRECT_UP;
-        if (nextGrid.x == tankLocation.x) {
+        if (nextGrid.x == tankLocation.x && nextGrid.y == tankLocation.y) {
+            return;
+        } else if (nextGrid.x == tankLocation.x) {
             direct = nextGrid.y > tankLocation.y ? DIRECT_DOWN : DIRECT_UP;
         } else if (nextGrid.y == tankLocation.y) {
             direct = nextGrid.x > tankLocation.x ? DIRECT_RIGHT : DIRECT_LEFT;
         }
-        this.tank.moveControl(direct, undefined);
+        this.tank.moveControl(direct, true);
     }
 
     /**
      * aiTank碰撞到静态元素的行为
      * @param {*} event
      */
-    aiCollideHandler(event) {
-        //做一次移动反应
-        this.moveReact();
-
-        //TODO临时代码
-        this.tank.moveControl(undefined, true);
-    }
+    aiCollideHandler(event) {}
 
     /**
      * 做决策的tick
      */
-    decisionTick() {
-        let startAi = MapUtil.canvasToAi(this.tank.position.location());
+    makeDecision() {
+        let start = MapUtil.canvasToScene(this.tank.position.location());
 
-        let findPoint = this.findPoint();
-        this.futureRoad = this.findPath(startAi.x, startAi.y, findPoint.x, findPoint.y);
+        let init = true;
+        while (init || this.futureRoad.length == 0) {
+            let findPoint = this.findPoint();
+            this.futureRoad = this.findPath(start.x, start.y, findPoint.x, findPoint.y);
+            init = false;
+        }
+        console.log(Util.copyArray(this.futureRoad));
+
+        this.moveReact();
     }
 
     /**
      * 寻点算法
-     * @returns [x,y]
+     * @returns { x: x, y: y }
      */
     findPoint() {
+        // if (1 == 1) {
+        //     console.log('sdas');
+
+        //     return { x: 5, y: 20 };
+        // }
+
         let width = this.aiMap.map.length;
         let height = this.aiMap.map[0].length;
 
@@ -234,6 +256,7 @@ class TankAi {
      * @returns
      */
     findPath(startX, satrtY, aimX, aimY) {
+        //深拷贝一份地图对象
         let copyMap = this.aiMap.deepClone();
 
         let aim = copyMap.get(aimX, aimY);
@@ -241,16 +264,20 @@ class TankAi {
         let openList = [start];
         let closeList = [];
         while (openList.length != 0) {
-            openList.sort((a, b) => getF(a) - getF(b));
-            let foundReachable = false;
-            let min = openList.pop();
+            //排序，有限按F排序，F相同时按H排序
+            openList.sort((a, b) => (getF(a) != getF(b) ? getF(a) - getF(b) : a.h - b.h));
+
+            //取开销最小的格子
+            let min = openList.shift();
             closeList.push(min);
+
+            //遍历周围可达的格子
             let reachableGrids = copyMap.arroundGrid(min.x, min.y);
             for (let grid of reachableGrids) {
+                //该格子没走过时初始化，并加入到openList
                 if (closeList.indexOf(grid) == -1 && openList.indexOf(grid) == -1) {
                     grid.resetContext(start, aim, min);
                     openList.push(grid);
-                    foundReachable = true;
                 }
 
                 //找到目的地了，记录路径并返回
@@ -258,15 +285,12 @@ class TankAi {
                     return grid.traceParent().reverse();
                 }
             }
-
-            //无路可走了，记录路径并返回
-            if (!foundReachable) {
-                closeList.shift();
-                return closeList;
-            }
         }
-        //没找到路
-        return [];
+
+        //无路可走了，选离终点最近的那条路
+        closeList.sort((a, b) => a.h - b.h);
+        let min = closeList.shift();
+        return min.traceParent().reverse();
 
         function getF(grid) {
             return grid.g + grid.h;

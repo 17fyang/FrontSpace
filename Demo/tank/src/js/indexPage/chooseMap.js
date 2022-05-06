@@ -12,7 +12,6 @@ function onBodyLoad() {
         params: listData,
     }).then(res => {
         mapList = res.data.data.data;
-        console.log(mapList);
         drawHtml(mapList);
     });
 }

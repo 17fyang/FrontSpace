@@ -6,50 +6,38 @@ class Event {
  * 实体间碰撞事件
  */
 class EntityCollideEvent extends Event {
-    constructor(entity1, entity2) {
+    constructor(entity, otherEntity) {
         super();
-        this.entity1 = entity1;
-        this.entity2 = entity2;
+        this.entity = entity;
+        this.otherEntity = otherEntity;
     }
     apply() {
-        if (this.entity1 instanceof Bullet) {
-            if (this.entity2 instanceof Tank) {
-                this.applyBulletTank(this.entity1, this.entity2);
+        if (this.entity instanceof Bullet) {
+            //如果是实体自己发射的子弹，则不做处理
+            if (this.entity.parentEntity == this.otherEntity) {
+                return;
+            }
+
+            //子弹碰到实体，子弹消失
+            this.entity.tickContext.allowMove = false;
+            this.entity.tickContext.disappear = true;
+        }
+
+        if (this.entity instanceof Tank) {
+            if (this.otherEntity instanceof Bullet) {
+                //如果是实体自己发射的子弹，则不做处理
+                if (this.otherEntity.parentEntity == this.entity) {
+                    return;
+                }
+
+                //坦克碰到子弹，坦克消失
+                this.entity.tickContext.allowMove = false;
+                this.entity.tickContext.disappear = true;
+            } else if (this.otherEntity instanceof Tank) {
+                //坦克碰到坦克，不能移动
+                this.entity.tickContext.allowMove = false;
             }
         }
-
-        if (this.entity1 instanceof Tank) {
-            if (this.entity2 instanceof Bullet) {
-                this.applyBulletTank(this.entity2, this.entity1);
-            } else if (this.entity2 instanceof Tank) {
-                this.applyTankTank(this.entity1, this.entity2);
-            }
-        }
-    }
-
-    /**
-     * 处理子弹和坦克的碰撞,子弹和坦克都消失
-     * @param  bullet
-     * @param  tnakContext
-     */
-    applyBulletTank(bullet, tank) {
-        if (bullet.parentEntity != tank) {
-            bullet.tickContext.allowMove = false;
-            bullet.tickContext.disappear = true;
-
-            tank.tickContext.allowMove = false;
-            tank.tickContext.disappear = true;
-        }
-    }
-
-    /**
-     *处理坦克和坦克的碰撞，两辆坦克都不能移动
-     * @param  tank1
-     * @param  tank2
-     */
-    applyTankTank(tank1, tank2) {
-        tank1.tickContext.allowMove = false;
-        tank2.tickContext.allowMove = false;
     }
 }
 /**
@@ -67,7 +55,8 @@ class BorderCollideEvent extends Event {
             this.entity.tickContext.disappear = true;
         } else if (this.entity instanceof Tank) {
             //坦克撞到边界，需要修正下一tick坦克的位置
-            this.entity.fixTickContextLocation();
+            let allowMove = this.entity.fixDirectLocation();
+            this.entity.tickContext.allowMove = allowMove;
         }
     }
 }
@@ -99,7 +88,8 @@ class ItemCollideEvent extends Event {
         //坦克撞到墙，需要修正下一tick坦克的位置
         if (this.entity instanceof Tank) {
             if (this.item instanceof Brick) {
-                this.entity.fixTickContextLocation();
+                let allowMove = this.entity.fixDirectLocation();
+                this.entity.tickContext.allowMove = allowMove;
             }
         }
     }
@@ -142,9 +132,6 @@ class EventHandlerClass {
      */
     handle(event) {
         event.apply();
-        if (event instanceof ItemCollideEvent) {
-            console.log(event);
-        }
         this.handleAsync(event);
     }
 

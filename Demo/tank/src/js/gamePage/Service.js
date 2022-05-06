@@ -76,5 +76,20 @@ class SceneServiceClass {
     }
 }
 
+class AiServiceClass {
+    constructor() {
+        this.aiList = []; //所有坦克AI
+    }
+
+    /**
+     * 添加ai
+     * @param {TankAi} tankAi
+     */
+    addAi(tankAi) {
+        this.aiList.push(tankAi);
+    }
+}
+
 const entityService = new EntityServiceClass();
 const sceneService = new SceneServiceClass();
+const aiSercice = new AiServiceClass();
