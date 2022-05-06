@@ -98,10 +98,10 @@ class AiMap {
     arroundGrid(x, y) {
         let arroundList = [];
         let candidate = [
-            [x - 1, y],
-            [x + 1, y],
-            [x, y - 1],
-            [x, y + 1],
+            [DIRECT_UP.grid.x + x, DIRECT_UP.grid.y + y],
+            [DIRECT_DOWN.grid.x + x, DIRECT_DOWN.grid.y + y],
+            [DIRECT_LEFT.grid.x + x, DIRECT_LEFT.grid.y + y],
+            [DIRECT_RIGHT.grid.x + x, DIRECT_RIGHT.grid.y + y],
         ];
         //TODO 想法记录：
         //1、怎么处理两个实体相撞？真实遍历实体列表，只处理调用方实体，用调用方的nextTick和被调用方的tick比较
@@ -158,23 +158,26 @@ class TankAi {
             this.tickTime = 0;
         }
 
-        let nowLocation = MapUtil.canvasToScene(this.tank.position.location());
-        let nextCollision = this.tank.tickContext.collision;
-        let nextLocation = MapUtil.canvasToScene({ x: nextCollision[0], y: nextCollision[1] });
-        let futureGrid = this.futureRoad[0];
+        let now = MapUtil.canvasToScene(this.tank.position.location());
+        let direct = this.tank.position.direct;
+        let next = { x: direct.grid.x + now.x, y: direct.grid.y + now.y };
 
-        if (nowLocation.x == nextLocation.x && nowLocation.y == nextLocation.y) {
-            //如果当前tick和下一tick处于同个格子，则表示坦克到达了这个格子
-            if (futureGrid.x == nowLocation.x && futureGrid.y == nowLocation.y) {
-                this.futureRoad.shift();
-            }
-        } else if (nextLocation.x == futureGrid.x && nextLocation.y == futureGrid.y) {
-            //如果下一tick和规划路线的下个格子相同，则表示坦克按规划路线前进
-            //TODO 处理前进不成功的情况，既shift掉了，但是下一tick坦克被挡住了
-            return;
-        } else if (nextLocation.x != futureGrid.x || nextLocation.y != futureGrid.y) {
-            //如果下一个格子不在坦克的行驶方向上，需要做一次移动反应
-            this.tank.fixDirectLocation();
+        //如果坦克当前格子和规划格子一致，则表示坦克刚到达这个格子，删除规划格子
+        let future = this.futureRoad[0];
+        if (future.x == now.x && future.y == now.y) {
+            this.futureRoad.shift();
+        }
+
+        //TODO这样实现会导致左上拐弯的时候瞬间跳一个格子，暂时不解决
+        //如果当前格子和下一个规划的格子不一致，则需要做一次移动反应
+        let vertical = (direct == DIRECT_UP || direct == DIRECT_DOWN) && future.x != next.x;
+        let horizontal = (direct == DIRECT_LEFT || direct == DIRECT_RIGHT) && future.y != next.y;
+        future = this.futureRoad[0];
+        if (this.futureRoad.length != 0 && (vertical || horizontal)) {
+            let nowCanvas = MapUtil.sceneToCanvas(now);
+            let collision = this.tank.tickContext.collision;
+            collision[0] = nowCanvas.x;
+            collision[1] = nowCanvas.y;
             this.moveReact();
         }
     }
@@ -186,7 +189,7 @@ class TankAi {
         let nextGrid = this.futureRoad[0];
         let tankLocation = MapUtil.canvasToScene(this.tank.position.location());
 
-        let direct = DIRECT_UP;
+        let direct = undefined;
         if (nextGrid.x == tankLocation.x && nextGrid.y == tankLocation.y) {
             return;
         } else if (nextGrid.x == tankLocation.x) {
@@ -201,7 +204,9 @@ class TankAi {
      * aiTank碰撞到静态元素的行为
      * @param {*} event
      */
-    aiCollideHandler(event) {}
+    aiCollideHandler(event) {
+        // this.moveReact();
+    }
 
     /**
      * 做决策的tick

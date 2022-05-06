@@ -148,6 +148,14 @@ class Scene {
         for (let entity of entityService.entityList) {
             entity.draw(ctx);
         }
+
+        //TODO 临时代码，画出坦克的规划路线
+        let ai = aiSercice.aiList[0];
+        for (let road of ai.futureRoad) {
+            ctx.fillStyle = '#00FF00';
+            let canvasPoint = MapUtil.sceneToCanvas({ x: road.x, y: road.y });
+            ctx.fillRect(canvasPoint.x, canvasPoint.y, PIXEL_NUM, PIXEL_NUM);
+        }
     }
 
     /**

@@ -1,7 +1,7 @@
-const DIRECT_UP = { key: 'KeyW', rotate: 0 };
-const DIRECT_RIGHT = { key: 'KeyD', rotate: Math.PI / 2 };
-const DIRECT_DOWN = { key: 'KeyS', rotate: Math.PI };
-const DIRECT_LEFT = { key: 'KeyA', rotate: (Math.PI * 3) / 2 };
+const DIRECT_UP = { key: 'KeyW', rotate: 0, grid: { x: 0, y: -1 } };
+const DIRECT_RIGHT = { key: 'KeyD', rotate: Math.PI / 2, grid: { x: 1, y: 0 } };
+const DIRECT_DOWN = { key: 'KeyS', rotate: Math.PI, grid: { x: 0, y: 1 } };
+const DIRECT_LEFT = { key: 'KeyA', rotate: (Math.PI * 3) / 2, grid: { x: -1, y: 0 } };
 
 class Position {
     constructor(x, y, direct) {
