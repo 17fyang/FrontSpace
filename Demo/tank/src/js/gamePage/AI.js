@@ -144,9 +144,6 @@ class TankAi {
         eventHandler.addBorderCollideEventListener(this.tank, event =>
             this.aiCollideHandler(event)
         );
-
-        //初始时做一次决策并做一次移动反应
-        this.makeDecision();
     }
 
     tick() {
@@ -174,10 +171,6 @@ class TankAi {
         let horizontal = (direct == DIRECT_LEFT || direct == DIRECT_RIGHT) && future.y != next.y;
         future = this.futureRoad[0];
         if (this.futureRoad.length != 0 && (vertical || horizontal)) {
-            let nowCanvas = MapUtil.sceneToCanvas(now);
-            let collision = this.tank.tickContext.collision;
-            collision[0] = nowCanvas.x;
-            collision[1] = nowCanvas.y;
             this.moveReact();
         }
     }
@@ -197,6 +190,11 @@ class TankAi {
         } else if (nextGrid.y == tankLocation.y) {
             direct = nextGrid.x > tankLocation.x ? DIRECT_RIGHT : DIRECT_LEFT;
         }
+
+        //修正坦克的当前位置
+        this.tank.fixFullLocation();
+
+        //控制坦克的移动方向
         this.tank.moveControl(direct, true);
     }
 
@@ -221,6 +219,7 @@ class TankAi {
             init = false;
         }
 
+        //做一次移动反应
         this.moveReact();
     }
 

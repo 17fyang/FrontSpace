@@ -225,6 +225,22 @@ class Tank extends Entity {
             return true;
         }
     }
+    /**
+     * 对当前实体所在格子进行全方位修正，使得格子实体左上角正好处于格子左上角
+     * @returns
+     */
+    fixFullLocation() {
+        let fixNow = MapUtil.sceneToCanvas(MapUtil.canvasToScene(this.position.location()));
+        if (fixNow.y == this.y && fixNow.x == this.x) {
+            //不需要修正
+            return false;
+        } else {
+            //需要修正
+            this.tickContext.collision[0] = fixNow.x;
+            this.tickContext.collision[1] = fixNow.y;
+            return true;
+        }
+    }
 
     /**
      * 发射子弹
