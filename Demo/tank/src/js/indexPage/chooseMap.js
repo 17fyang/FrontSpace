@@ -67,6 +67,10 @@ function onKeyDown(event) {
     }
     updateIndexActive();
 
+    if (code == 'Enter') {
+        let currentMap = JSON.stringify(mapList[mapIndex]);
+        localStorage.setItem('map', currentMap);
+    }
     if (code == 'Escape' || code == 'Enter') {
         window.location.href = '../../index.html';
     }

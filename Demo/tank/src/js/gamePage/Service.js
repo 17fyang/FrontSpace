@@ -25,22 +25,25 @@ class EntityServiceClass {
 
 class SceneServiceClass {
     constructor() {
-        this.sceneItemMap = this.initMap(); //场景静态元素Map索引
+        this.sceneItemMap = []; //场景静态元素Map索引
         this.sceneItemList = []; //场景静态元素List索引
     }
 
     /**
-     * 初始化空的地图数据
+     * 初始化地图数据
      */
-    initMap() {
-        let map = [];
-        for (let i = 0; i < MAP_WIDTH; i++) {
-            map[i] = [];
-            for (let j = 0; j < MAP_HEIGHT; j++) {
-                map[i][j] = undefined;
+    initMap(map) {
+        for (let i = 0; i < map.length; i++) {
+            this.sceneItemMap[i] = [];
+            for (let j = 0; j < map[i].length; j++) {
+                this.sceneItemMap[i][j] = undefined;
+                let item = SceneItem.valueOfByType(map[i][j], i, j);
+                if (item == undefined || item instanceof Air) {
+                    continue;
+                }
+                this.addSceneItem(item);
             }
         }
-        return map;
     }
 
     /**

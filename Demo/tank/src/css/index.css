@@ -50,8 +50,21 @@ span {
 }
 
 .wordSpan {
+    display: inline-block;
     font-size: 18px;
+    width: 20%;
     vertical-align: -8px;
+    white-space: nowrap;
+}
+
+.pickMap {
+    display: inline-block;
+    font-size: 13px;
+    vertical-align: middle;
+    width: 200%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tankImg {

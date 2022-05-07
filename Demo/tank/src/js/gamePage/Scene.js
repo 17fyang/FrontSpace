@@ -105,9 +105,12 @@ class Brick extends SceneItem {
 }
 
 class Scene {
-    constructor(width, height) {
+    constructor(map, width, height) {
         this.width = width;
         this.height = height;
+
+        //场景静态元素初始化
+        sceneService.initMap(map);
 
         this.borderList = [
             [-1, 0, 1, this.height],
@@ -115,24 +118,6 @@ class Scene {
             [this.width, 0, 1, this.height],
             [0, this.height, this.width, 1],
         ]; //边界碰撞箱
-
-        //场景静态元素初始化
-        this.init();
-    }
-
-    /**
-     * 场景初始化
-     */
-    init() {
-        for (let i = 0; i < 20; i++) {
-            sceneService.addSceneItem(new Brick(10, 10 + i));
-            sceneService.addSceneItem(new Brick(11, 10 + i));
-            sceneService.addSceneItem(new Brick(12, 10 + i));
-            sceneService.addSceneItem(new Brick(13, 10 + i));
-
-            sceneService.addSceneItem(new Brick(18, i));
-            sceneService.addSceneItem(new Brick(10 + i, 30));
-        }
     }
 
     /**

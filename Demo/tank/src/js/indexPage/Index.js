@@ -6,6 +6,15 @@ let interactionDiv = document.getElementsByClassName('interactionDiv')[0];
 let tankSpanList = document.getElementsByClassName('tankSpan');
 let currentIdx = INDEX_START_GAME;
 setTankIndex(currentIdx);
+initHtml();
+
+function initHtml() {
+    let map = JSON.parse(localStorage.getItem('map'));
+    if (map) {
+        let mapSpan = document.getElementsByClassName('pickMap')[0];
+        mapSpan.innerHTML = '已选择：' + map.name;
+    }
+}
 
 /**
  *  设置坦克光标当前的位置

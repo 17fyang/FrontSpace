@@ -209,7 +209,7 @@ class TankAi {
     }
 
     /**
-     * 做决策的tick
+     * 做一次决策
      */
     makeDecision() {
         let start = MapUtil.canvasToScene(this.tank.position.location());
@@ -220,7 +220,6 @@ class TankAi {
             this.futureRoad = this.findPath(start.x, start.y, findPoint.x, findPoint.y);
             init = false;
         }
-        console.log(Util.copyArray(this.futureRoad));
 
         this.moveReact();
     }
@@ -230,12 +229,6 @@ class TankAi {
      * @returns { x: x, y: y }
      */
     findPoint() {
-        // if (1 == 1) {
-        //     console.log('sdas');
-
-        //     return { x: 5, y: 20 };
-        // }
-
         let width = this.aiMap.map.length;
         let height = this.aiMap.map[0].length;
 
