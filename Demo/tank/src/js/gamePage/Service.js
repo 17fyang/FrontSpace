@@ -27,6 +27,8 @@ class SceneServiceClass {
     constructor() {
         this.sceneItemMap = []; //场景静态元素Map索引
         this.sceneItemList = []; //场景静态元素List索引
+
+        this.aiMap = undefined; //ai地图
     }
 
     /**
@@ -44,6 +46,9 @@ class SceneServiceClass {
                 this.addSceneItem(item);
             }
         }
+
+        //初始化AI地图
+        this.aiMap = new AiMap(this.sceneItemMap);
     }
 
     /**
@@ -66,6 +71,8 @@ class SceneServiceClass {
         if (idx >= 0) {
             this.sceneItemList.splice(idx, 1);
         }
+
+        this.aiMap.remove(item.x, item.y);
     }
 
     /**

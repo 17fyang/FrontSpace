@@ -77,6 +77,18 @@ class AiMap {
     }
 
     /**
+     * 清除一个位置的格子
+     * @param {Number} x
+     * @param {Number} y
+     */
+    remove(x, y) {
+        let grid = this.map[x][y];
+        if (grid) {
+            grid.type = MAP_REACHABLE;
+        }
+    }
+
+    /**
      * 深拷贝一份地图对象
      * @returns AiMap
      */
