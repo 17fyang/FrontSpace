@@ -93,6 +93,24 @@ class AiServiceClass {
     }
 }
 
+class SoundServiceClass {
+    constructor() {
+        this.hasPlayStart = false;
+    }
+
+    playStart() {
+        if (!this.hasPlayStart) {
+            this.play('startGameSound');
+            this.hasPlayStart = true;
+        }
+    }
+
+    play(sound) {
+        document.getElementById(sound).play();
+    }
+}
+
+const soundService = new SoundServiceClass();
 const entityService = new EntityServiceClass();
 const sceneService = new SceneServiceClass();
 const aiSercice = new AiServiceClass();

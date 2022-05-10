@@ -1,6 +1,8 @@
 function main(canvas) {
     let ctx = canvas.getContext('2d');
 
+    // soundService.playStart();
+
     //获取选取的地图
     let map = JSON.parse(JSON.parse(localStorage.getItem('map')).map);
 
@@ -18,12 +20,14 @@ function main(canvas) {
     //给玩家坦克添加键盘和鼠标监听
     let body = document.getElementById('body');
     body.addEventListener('keydown', event => {
+        soundService.playStart();
         tank.keyDownListener(event);
     });
     body.addEventListener('keyup', event => {
         tank.keyUpListener(event);
     });
     body.addEventListener('mousedown', event => {
+        soundService.playStart();
         tank.shootBullet();
     });
 
