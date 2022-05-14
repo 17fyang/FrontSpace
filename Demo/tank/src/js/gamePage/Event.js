@@ -1,6 +1,7 @@
 const ENTITY_COLLIDE_EVENT = 'entityCollideEvent';
 const BORDER_COLLIDE_EVENT = 'BorderCollideEvent';
 const ITEM_COLLIDE_EVENT = 'ItemCollideEvent';
+const AI_BLOCK_EVENT = 'AiBlockEvent';
 
 class EntityEvent {
     constructor(entity) {
@@ -50,6 +51,15 @@ class ItemCollideEvent extends EntityEvent {
 
     name() {
         return ITEM_COLLIDE_EVENT;
+    }
+}
+
+/**
+ * AI实体卡住事件（长时间和其他坦克发生碰撞）
+ */
+class AiBlockEvent extends EntityEvent {
+    name() {
+        return AI_BLOCK_EVENT;
     }
 }
 

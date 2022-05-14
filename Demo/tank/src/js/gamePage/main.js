@@ -29,6 +29,8 @@ function main(canvas) {
 
     //实现帧动画
     window.requestAnimationFrame(function draw() {
+        tickService.tick();
+
         //清空所有画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 

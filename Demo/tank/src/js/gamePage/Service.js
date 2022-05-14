@@ -119,6 +119,20 @@ class SoundServiceClass {
     }
 }
 
+class TickServiceClass {
+    constructor() {
+        this.nowTick = 0;
+    }
+
+    tick() {
+        this.nowTick++;
+        if (this.nowTick > 30) {
+            this.nowTick = 0;
+        }
+    }
+}
+
+const tickService = new TickServiceClass();
 const soundService = new SoundServiceClass();
 const entityService = new EntityServiceClass();
 const sceneService = new SceneServiceClass();

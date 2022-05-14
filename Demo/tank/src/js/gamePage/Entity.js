@@ -74,14 +74,14 @@ class Position {
 class Entity {
     constructor() {
         this.uuid = Util.uuid(); //生成uui
-        this.tickContext = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
+        this.tickStatus = { collision: undefined, allowMove: true, disappear: undefined }; //用于保存当前tick的状态
     }
 
     /**
-     *重置tick上下文对象
+     *重置tick状态对象
      */
-    resetTickContext() {
-        this.tickContext = {
+    resettickStatus() {
+        this.tickStatus = {
             collision: this.tryMove(),
             allowMove: true,
             disappear: false,
@@ -147,7 +147,7 @@ class Bullet extends Entity {
      * @param {BorderCollideEvent} event
      */
     handleBorderCollide(event) {
-        this.tickContext.disappear = true;
+        this.tickStatus.disappear = true;
     }
 
     /**
@@ -157,13 +157,13 @@ class Bullet extends Entity {
      */
     handleEntityCollide(event) {
         //如果是实体自己发射的子弹，则不做处理
-        if (event instanceof Tank && this.parentEntity == event.otherEntity) {
+        if (event.otherEntity instanceof Tank && this.parentEntity == event.otherEntity) {
             return;
         }
 
         //子弹碰到实体，子弹消失
-        this.tickContext.allowMove = false;
-        this.tickContext.disappear = true;
+        this.tickStatus.allowMove = false;
+        this.tickStatus.disappear = true;
     }
 
     /**
@@ -173,11 +173,11 @@ class Bullet extends Entity {
     handeItemCollide(event) {
         //子弹撞到了砖块，子弹和砖块都消失
         if (event.item instanceof Brick) {
-            this.tickContext.allowMove = false;
-            this.tickContext.disappear = true;
+            this.tickStatus.allowMove = false;
+            this.tickStatus.disappear = true;
             let bulletDirect = this.position.direct;
             for (let affectItem of this.relocateItem(event.item.x, event.item.y, bulletDirect)) {
-                affectItem.tickContext.disappear = true;
+                affectItem.tickStatus.disappear = true;
             }
         }
     }
@@ -243,6 +243,8 @@ class Tank extends Entity {
         this.speed = 1.2; //坦克移动速度
         this.keyOpera = new KeyOpera(); //键盘事件栈
 
+        this.tickContext = { entityCollideTime: 0, lastEntityCollideTick: 0 }; //tick上下文，用于保存多个tick之间的状态
+
         //把坦克添加到场景中
         entityService.addEntity(this);
 
@@ -264,7 +266,7 @@ class Tank extends Entity {
      */
     handleBorderCollide(event) {
         let allowMove = this.fixDirectLocation();
-        this.tickContext.allowMove = allowMove;
+        this.tickStatus.allowMove = allowMove;
     }
 
     /**
@@ -275,16 +277,16 @@ class Tank extends Entity {
     handleEntityCollide(event) {
         if (event.otherEntity instanceof Bullet) {
             //如果是实体自己发射的子弹，则不做处理
-            if (event.otherEntity.parentEntity == this.entity) {
+            if (event.otherEntity.parentEntity == this) {
                 return;
             }
 
             //坦克碰到子弹，坦克消失
-            this.tickContext.allowMove = false;
-            this.tickContext.disappear = true;
+            this.tickStatus.allowMove = false;
+            this.tickStatus.disappear = true;
         } else if (event.otherEntity instanceof Tank) {
             //坦克碰到坦克，不能移动
-            this.tickContext.allowMove = false;
+            this.tickStatus.allowMove = false;
         }
     }
 
@@ -296,7 +298,7 @@ class Tank extends Entity {
         //坦克撞到墙，需要修正下一tick坦克的位置
         if (event.item instanceof Brick) {
             let allowMove = this.fixDirectLocation();
-            this.tickContext.allowMove = allowMove;
+            this.tickStatus.allowMove = allowMove;
         }
     }
 
@@ -340,7 +342,7 @@ class Tank extends Entity {
     }
 
     /**
-     * 修正TickContext中的实体当前位置
+     * 修正tickStatus中的实体当前位置
      * 目的是解决移动前后tick的位置跨过了某障碍物的情况，修正后的位置是移动前位置和障碍物的交界处
      * @returns
      */
@@ -352,8 +354,8 @@ class Tank extends Entity {
             return false;
         } else {
             //需要修正
-            this.tickContext.collision[0] = fix.x;
-            this.tickContext.collision[1] = fix.y;
+            this.tickStatus.collision[0] = fix.x;
+            this.tickStatus.collision[1] = fix.y;
             return true;
         }
     }
@@ -368,8 +370,8 @@ class Tank extends Entity {
             return false;
         } else {
             //需要修正
-            this.tickContext.collision[0] = fixNow.x;
-            this.tickContext.collision[1] = fixNow.y;
+            this.tickStatus.collision[0] = fixNow.x;
+            this.tickStatus.collision[1] = fixNow.y;
             return true;
         }
     }
@@ -434,5 +436,27 @@ class AiTank extends Tank {
         //创建坦克AI行为对象
         this.ai = new TankAi(sceneService.aiMap, this);
         aiSercice.addAi(this.ai);
+    }
+
+    /**
+     *处理坦克和实体间碰撞的事件
+     * @param {EntityCollideEvent} event
+     * @returns
+     */
+    handleEntityCollide(event) {
+        super.handleEntityCollide(event);
+        if (event.otherEntity instanceof Tank) {
+            if (tickService.nowTick == this.tickContext.lastEntityCollideTick + 1) {
+                this.tickContext.entityCollideTime++;
+            } else {
+                this.tickContext.entityCollideTime = 0;
+            }
+
+            //连续10个tick都会碰到坦克，说明卡住了，发送事件
+            if (this.tickContext.entityCollideTime >= 10) {
+                eventHandler.handle(new AiBlockEvent(this));
+            }
+            this.tickContext.lastEntityCollideTick = tickService.nowTick;
+        }
     }
 }

@@ -5,7 +5,7 @@ class SceneItem {
         this.y = y;
         this.width = width == undefined ? PIXEL_NUM : width; //一个元素单位的宽默认是一个地图格子
         this.height = height == undefined ? PIXEL_NUM : height; //一个元素单位的高默认是一个地图格子
-        this.tickContext = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
+        this.tickStatus = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
     }
 
     static valueOfByType(type, x, y, width, height) {
@@ -19,7 +19,7 @@ class SceneItem {
     /**
      *重置tick上下文对象
      */
-    resetTickContext() {}
+    resettickStatus() {}
 
     /**
      *  绘制该元素
@@ -99,8 +99,8 @@ class Brick extends SceneItem {
     /**
      *重置tick上下文对象
      */
-    resetTickContext() {
-        this.tickContext = { collision: this.collision(), disappear: false };
+    resettickStatus() {
+        this.tickStatus = { collision: this.collision(), disappear: false };
     }
 }
 
@@ -149,10 +149,10 @@ class Scene {
     tick() {
         //重置tick上下文
         for (let entity of entityService.entityList) {
-            entity.resetTickContext();
+            entity.resettickStatus();
         }
         for (let item of sceneService.sceneItemList) {
-            item.resetTickContext();
+            item.resettickStatus();
         }
 
         //计算实体碰撞情况
@@ -164,7 +164,7 @@ class Scene {
 
             //计算场景中实体和边界碰撞情况
             for (let border of this.borderList) {
-                if (Util.collideCheck(border, entity.tickContext.collision)) {
+                if (Util.collideCheck(border, entity.tickStatus.collision)) {
                     let event = new BorderCollideEvent(entity, border);
                     eventHandler.handle(event);
                 }
@@ -172,7 +172,7 @@ class Scene {
 
             //计算场景中的实体和静态元素碰撞情况
             for (let item of sceneService.sceneItemList) {
-                if (Util.collideCheck(entity.tickContext.collision, item.tickContext.collision)) {
+                if (Util.collideCheck(entity.tickStatus.collision, item.tickStatus.collision)) {
                     let event = new ItemCollideEvent(entity, item);
                     eventHandler.handle(event);
                 }
@@ -180,7 +180,7 @@ class Scene {
 
             //计算场景中的实体和实体碰撞情况
             for (let otherEntity of entityService.entityList) {
-                let tickCollision = entity.tickContext.collision;
+                let tickCollision = entity.tickStatus.collision;
                 let otherNowCollision = otherEntity.collision();
                 if (entity != otherEntity && Util.collideCheck(tickCollision, otherNowCollision)) {
                     let event = new EntityCollideEvent(entity, otherEntity);
@@ -196,16 +196,16 @@ class Scene {
 
         //处理实体状态生效
         for (let entity of Util.copyArray(entityService.entityList)) {
-            if (entity.tickContext.disappear) {
+            if (entity.tickStatus.disappear) {
                 entityService.removeEntity(entity);
             }
-            if (entity.tickContext.allowMove) {
-                entity.move(entity.tickContext.collision[0], entity.tickContext.collision[1]);
+            if (entity.tickStatus.allowMove) {
+                entity.move(entity.tickStatus.collision[0], entity.tickStatus.collision[1]);
             }
         }
         //处理静态元素状态生效
         for (let item of Util.copyArray(sceneService.sceneItemList)) {
-            if (item.tickContext.disappear) {
+            if (item.tickStatus.disappear) {
                 sceneService.removeSceneItem(item);
             }
         }

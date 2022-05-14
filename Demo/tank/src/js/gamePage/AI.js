@@ -150,13 +150,10 @@ class TankAi {
         this.tickTime = 0;
         this.futureRoad = []; //坦克的决策路径[AiGrid]
 
-        //添加撞到墙的监听
-        eventHandler.registeAsync(ITEM_COLLIDE_EVENT, this.tank.uuid, event =>
-            this.aiCollideHandler(event)
-        );
-        eventHandler.registeAsync(BORDER_COLLIDE_EVENT, this.tank.uuid, event =>
-            this.aiCollideHandler(event)
-        );
+        //注册AiBlock监听，卡住时做一次决策
+        eventHandler.registeAsync(AI_BLOCK_EVENT, this.tank.uuid, event => {
+            this.makeDecision();
+        });
     }
 
     tick() {
@@ -209,14 +206,6 @@ class TankAi {
 
         //控制坦克的移动方向
         this.tank.moveControl(direct, true);
-    }
-
-    /**
-     * aiTank碰撞到静态元素的行为
-     * @param {*} event
-     */
-    aiCollideHandler(event) {
-        // this.moveReact();
     }
 
     /**
