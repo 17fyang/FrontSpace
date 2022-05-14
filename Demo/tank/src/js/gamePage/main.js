@@ -1,8 +1,6 @@
 function main(canvas) {
     let ctx = canvas.getContext('2d');
 
-    // soundService.playStart();
-
     //获取选取的地图
     let map = JSON.parse(JSON.parse(localStorage.getItem('map')).map);
 
@@ -12,8 +10,8 @@ function main(canvas) {
     let tank = new PlayerTank(500, 250, DIRECT_UP);
     //创建AI坦克对象
     let aiTank = new AiTank(200, 100, DIRECT_UP);
-    //创建坦克AI行为对象
-    let tankAi = new TankAi(sceneService.aiMap, aiTank);
+    //创建AI坦克对象
+    let aiTank2 = new AiTank(300, 100, DIRECT_UP);
 
     //给玩家坦克添加键盘和鼠标监听
     let body = document.getElementById('body');
@@ -28,13 +26,6 @@ function main(canvas) {
         soundService.playStart();
         tank.shootBullet();
     });
-
-    //把坦克添加到场景中
-    entityService.addEntity(tank);
-    entityService.addEntity(aiTank);
-
-    //添加AI到Service管理
-    aiSercice.addAi(tankAi);
 
     //实现帧动画
     window.requestAnimationFrame(function draw() {

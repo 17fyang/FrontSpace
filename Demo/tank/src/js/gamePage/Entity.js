@@ -129,6 +129,82 @@ class Bullet extends Entity {
         this.position = new Position(realX, realY, direct);
         this.position.moving = true;
         this.speed = speed; //子弹速度
+
+        //注册监听
+        eventHandler.registeSync(ITEM_COLLIDE_EVENT, this.uuid, event => {
+            this.handeItemCollide(event);
+        });
+        eventHandler.registeSync(BORDER_COLLIDE_EVENT, this.uuid, event => {
+            this.handleBorderCollide(event);
+        });
+        eventHandler.registeSync(ENTITY_COLLIDE_EVENT, this.uuid, event => {
+            this.handleEntityCollide(event);
+        });
+    }
+
+    /**
+     * 处理子弹碰到边界的事件
+     * @param {BorderCollideEvent} event
+     */
+    handleBorderCollide(event) {
+        this.tickContext.disappear = true;
+    }
+
+    /**
+     *处理子弹和实体间碰撞的事件
+     * @param {EntityCollideEvent} event
+     * @returns
+     */
+    handleEntityCollide(event) {
+        //如果是实体自己发射的子弹，则不做处理
+        if (event instanceof Tank && this.parentEntity == event.otherEntity) {
+            return;
+        }
+
+        //子弹碰到实体，子弹消失
+        this.tickContext.allowMove = false;
+        this.tickContext.disappear = true;
+    }
+
+    /**
+     *处理子弹撞到静态元素的事件
+     * @param {ItemCollideEvent} event
+     */
+    handeItemCollide(event) {
+        //子弹撞到了砖块，子弹和砖块都消失
+        if (event.item instanceof Brick) {
+            this.tickContext.allowMove = false;
+            this.tickContext.disappear = true;
+            let bulletDirect = this.position.direct;
+            for (let affectItem of this.relocateItem(event.item.x, event.item.y, bulletDirect)) {
+                affectItem.tickContext.disappear = true;
+            }
+        }
+    }
+
+    /**
+     * 子弹碰撞到墙时，会辐射周围的墙，入参是子弹和墙的碰撞地图坐标，出参是辐射到的实体对象
+     * @param {Number} x
+     * @param {Number} y
+     * @param {} direct
+     */
+    relocateItem(x, y, direct) {
+        let candidate = [];
+        if (direct == DIRECT_LEFT || direct == DIRECT_RIGHT) {
+            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2));
+            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2 + 1));
+        } else if (direct == DIRECT_UP || direct == DIRECT_DOWN) {
+            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2, y));
+            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2 + 1, y));
+        }
+
+        let itemList = [];
+        for (let item of candidate) {
+            if (item) {
+                itemList.push(item);
+            }
+        }
+        return itemList;
     }
 
     /**
@@ -166,6 +242,62 @@ class Tank extends Entity {
         this.position = new Position(x, y, direct);
         this.speed = 1.2; //坦克移动速度
         this.keyOpera = new KeyOpera(); //键盘事件栈
+
+        //把坦克添加到场景中
+        entityService.addEntity(this);
+
+        //注册监听
+        eventHandler.registeSync(ITEM_COLLIDE_EVENT, this.uuid, event => {
+            this.handeItemCollide(event);
+        });
+        eventHandler.registeSync(BORDER_COLLIDE_EVENT, this.uuid, event => {
+            this.handleBorderCollide(event);
+        });
+        eventHandler.registeSync(ENTITY_COLLIDE_EVENT, this.uuid, event => {
+            this.handleEntityCollide(event);
+        });
+    }
+
+    /**
+     * 处理坦克碰到边界的事件
+     * @param {BorderCollideEvent} event
+     */
+    handleBorderCollide(event) {
+        let allowMove = this.fixDirectLocation();
+        this.tickContext.allowMove = allowMove;
+    }
+
+    /**
+     *处理坦克和实体间碰撞的事件
+     * @param {EntityCollideEvent} event
+     * @returns
+     */
+    handleEntityCollide(event) {
+        if (event.otherEntity instanceof Bullet) {
+            //如果是实体自己发射的子弹，则不做处理
+            if (event.otherEntity.parentEntity == this.entity) {
+                return;
+            }
+
+            //坦克碰到子弹，坦克消失
+            this.tickContext.allowMove = false;
+            this.tickContext.disappear = true;
+        } else if (event.otherEntity instanceof Tank) {
+            //坦克碰到坦克，不能移动
+            this.tickContext.allowMove = false;
+        }
+    }
+
+    /**
+     *处理坦克撞到静态元素的事件
+     * @param {ItemCollideEvent} event
+     */
+    handeItemCollide(event) {
+        //坦克撞到墙，需要修正下一tick坦克的位置
+        if (event.item instanceof Brick) {
+            let allowMove = this.fixDirectLocation();
+            this.tickContext.allowMove = allowMove;
+        }
     }
 
     /**
@@ -295,4 +427,12 @@ class PlayerTank extends Tank {
     }
 }
 
-class AiTank extends Tank {}
+class AiTank extends Tank {
+    constructor(x, y, direct) {
+        super(x, y, direct);
+
+        //创建坦克AI行为对象
+        this.ai = new TankAi(sceneService.aiMap, this);
+        aiSercice.addAi(this.ai);
+    }
+}

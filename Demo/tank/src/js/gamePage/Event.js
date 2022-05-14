@@ -1,171 +1,151 @@
-class Event {
-    apply() {}
+const ENTITY_COLLIDE_EVENT = 'entityCollideEvent';
+const BORDER_COLLIDE_EVENT = 'BorderCollideEvent';
+const ITEM_COLLIDE_EVENT = 'ItemCollideEvent';
+
+class EntityEvent {
+    constructor(entity) {
+        this.entity = entity;
+    }
+
+    name() {
+        return 'event';
+    }
 }
 
 /**
  * 实体间碰撞事件
  */
-class EntityCollideEvent extends Event {
+class EntityCollideEvent extends EntityEvent {
     constructor(entity, otherEntity) {
-        super();
-        this.entity = entity;
+        super(entity);
         this.otherEntity = otherEntity;
     }
-    apply() {
-        if (this.entity instanceof Bullet) {
-            //如果是实体自己发射的子弹，则不做处理
-            if (this.entity.parentEntity == this.otherEntity) {
-                return;
-            }
 
-            //子弹碰到实体，子弹消失
-            this.entity.tickContext.allowMove = false;
-            this.entity.tickContext.disappear = true;
-        }
-
-        if (this.entity instanceof Tank) {
-            if (this.otherEntity instanceof Bullet) {
-                //如果是实体自己发射的子弹，则不做处理
-                if (this.otherEntity.parentEntity == this.entity) {
-                    return;
-                }
-
-                //坦克碰到子弹，坦克消失
-                this.entity.tickContext.allowMove = false;
-                this.entity.tickContext.disappear = true;
-            } else if (this.otherEntity instanceof Tank) {
-                //坦克碰到坦克，不能移动
-                this.entity.tickContext.allowMove = false;
-            }
-        }
+    name() {
+        return ENTITY_COLLIDE_EVENT;
     }
 }
 /**
  * 实体和边界碰撞事件
  */
-class BorderCollideEvent extends Event {
+class BorderCollideEvent extends EntityEvent {
     constructor(entity, border) {
-        super();
-        this.entity = entity;
+        super(entity);
         this.border = border;
     }
-    apply() {
-        if (this.entity instanceof Bullet) {
-            //子弹撞到了边界，子弹消失
-            this.entity.tickContext.disappear = true;
-        } else if (this.entity instanceof Tank) {
-            //坦克撞到边界，需要修正下一tick坦克的位置
-            let allowMove = this.entity.fixDirectLocation();
-            this.entity.tickContext.allowMove = allowMove;
-        }
+
+    name() {
+        return BORDER_COLLIDE_EVENT;
     }
 }
 
 /**
  * 实体和静态元素的碰撞事件
  */
-class ItemCollideEvent extends Event {
+class ItemCollideEvent extends EntityEvent {
     constructor(entity, item) {
-        super();
-        this.entity = entity;
-        this.scene = entity.scene;
+        super(entity);
         this.item = item;
     }
-    apply() {
-        //子弹撞到墙则消失
-        if (this.entity instanceof Bullet) {
-            if (this.item instanceof Brick) {
-                //子弹撞到了砖块，子弹和砖块都消失
-                this.entity.tickContext.allowMove = false;
-                this.entity.tickContext.disappear = true;
-                let bulletDirect = this.entity.position.direct;
-                for (let affectItem of this.relocateItem(this.item.x, this.item.y, bulletDirect)) {
-                    affectItem.tickContext.disappear = true;
-                }
-            }
-        }
 
-        //坦克撞到墙，需要修正下一tick坦克的位置
-        if (this.entity instanceof Tank) {
-            if (this.item instanceof Brick) {
-                let allowMove = this.entity.fixDirectLocation();
-                this.entity.tickContext.allowMove = allowMove;
-            }
-        }
-    }
-
-    /**
-     * 子弹碰撞到墙时，会辐射周围的墙，入参是子弹和墙的碰撞地图坐标，出参是辐射到的实体对象
-     * @param {Number} x
-     * @param {Number} y
-     * @param {} direct
-     */
-    relocateItem(x, y, direct) {
-        let candidate = [];
-        if (direct == DIRECT_LEFT || direct == DIRECT_RIGHT) {
-            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2));
-            candidate.push(sceneService.getSceneItem(x, parseInt(y / 2) * 2 + 1));
-        } else if (direct == DIRECT_UP || direct == DIRECT_DOWN) {
-            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2, y));
-            candidate.push(sceneService.getSceneItem(parseInt(x / 2) * 2 + 1, y));
-        }
-
-        let itemList = [];
-        for (let item of candidate) {
-            if (item) {
-                itemList.push(item);
-            }
-        }
-        return itemList;
+    name() {
+        return ITEM_COLLIDE_EVENT;
     }
 }
 
 class EventHandlerClass {
     constructor() {
-        this.itemCollideEventListener = [];
-        this.borderCollideEventListener = [];
+        this.syncMap = new Map(); //{name:{uuid:handle}}
+        this.asyncMap = new Map(); //{name:{uuid:handle}}
     }
 
     /**
      * 处理一个事件
-     * @param {Event} event
+     * @param {EntityEvent} event
      */
     handle(event) {
-        event.apply();
+        this.handleSync(event);
         this.handleAsync(event);
     }
 
     /**
+     * 同步处理一个事件
+     * @param {EntityEvent} event
+     */
+    handleSync(event) {
+        let eventHandler = this.syncMap.get(event.name());
+
+        let entity = event.entity;
+        if (entity && entity.uuid && eventHandler && eventHandler.has(entity.uuid)) {
+            let handler = eventHandler.get(entity.uuid);
+            handler(event);
+        }
+    }
+
+    /**
      * 异步处理一个事件
-     * @param {Event} event
+     * @param {EntityEvent} event
      */
     handleAsync(event) {
         setTimeout(() => {
-            if (event instanceof ItemCollideEvent) {
-                let asyncListener = this.itemCollideEventListener[event.entity.uuid];
-                if (asyncListener != undefined) {
-                    asyncListener(event);
-                }
-            } else if (event instanceof BorderCollideEvent) {
-                let asyncListener = this.borderCollideEventListener[event.entity.uuid];
-                if (asyncListener != undefined) {
-                    asyncListener(event);
-                }
+            let eventHandler = this.asyncMap.get(event.name());
+            let entity = event.entity;
+            if (entity && entity.uuid && eventHandler && eventHandler.has(entity.uuid)) {
+                let handler = eventHandler.get(entity.uuid);
+                handler(event);
             }
         }, 0);
     }
 
-    removeAllListener(entity) {
-        this.itemCollideEventListener[entity.uuid] = undefined;
-        this.borderCollideEventListener[entity.uuid] = undefined;
+    /**
+     * 注册一个同步事件监听
+     * @param {String} name
+     * @param {String} uuid
+     * @param {Function} handler
+     */
+    registeSync(name, uuid, handler) {
+        let eventMap = this.syncMap.get(name);
+
+        if (eventMap == undefined) {
+            eventMap = new Map();
+        }
+
+        eventMap.set(uuid, handler);
+        this.syncMap.set(name, eventMap);
     }
 
-    addItemCollideEventListener(entity, handler) {
-        this.itemCollideEventListener[entity.uuid] = handler;
+    /**
+     * 注册一个异步事件监听
+     * @param {String} name
+     * @param {String} uuid
+     * @param {Function} handler
+     */
+    registeAsync(name, uuid, handler) {
+        let eventMap = this.asyncMap.get(name);
+
+        if (eventMap == undefined) {
+            eventMap = new Map();
+        }
+
+        eventMap.set(uuid, handler);
+        this.asyncMap.set(name, eventMap);
     }
 
-    addBorderCollideEventListener(entity, handler) {
-        this.borderCollideEventListener[entity.uuid] = handler;
+    /**
+     * 移除一个uuid所有的监听
+     * @param {String} uuid
+     */
+    removeAllListener(uuid) {
+        for (let value of this.syncMap.values()) {
+            if (value.has(uuid)) {
+                value.delete(uuid);
+            }
+        }
+        for (let value of this.asyncMap.values()) {
+            if (value.has(uuid)) {
+                value.delete(uuid);
+            }
+        }
     }
 }
 const eventHandler = new EventHandlerClass();

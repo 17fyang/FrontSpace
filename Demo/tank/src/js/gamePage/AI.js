@@ -41,7 +41,6 @@ class AiMap {
      * @param {*} sceneMap
      */
     constructor(sceneMap) {
-        //TODO增加地图静态元素变动监听
         this.map = [];
 
         if (sceneMap == undefined) {
@@ -152,8 +151,10 @@ class TankAi {
         this.futureRoad = []; //坦克的决策路径[AiGrid]
 
         //添加撞到墙的监听
-        eventHandler.addItemCollideEventListener(this.tank, event => this.aiCollideHandler(event));
-        eventHandler.addBorderCollideEventListener(this.tank, event =>
+        eventHandler.registeAsync(ITEM_COLLIDE_EVENT, this.tank.uuid, event =>
+            this.aiCollideHandler(event)
+        );
+        eventHandler.registeAsync(BORDER_COLLIDE_EVENT, this.tank.uuid, event =>
             this.aiCollideHandler(event)
         );
     }
@@ -258,6 +259,29 @@ class TankAi {
         return point;
     }
 
+    copyMapWithEntity() {
+        let copyMap = this.aiMap.deepClone();
+
+        for (let entity of entityService.entityList) {
+            if (!(entity instanceof Tank) || entity == this.tank) {
+                continue;
+            }
+
+            let entityLocation = entity.position.location();
+            let sceneLocation = MapUtil.canvasToScene(entityLocation);
+
+            for (let i = sceneLocation.x; i < sceneLocation.x + TANK_WIDTH; i++) {
+                for (let j = sceneLocation.y; j < sceneLocation.y + TANK_HEIGHT; j++) {
+                    let grid = copyMap.get(i, j);
+                    if (grid) {
+                        grid.type = MAP_UNRECHABLE;
+                    }
+                }
+            }
+        }
+        return copyMap;
+    }
+
     /**
      * 寻路算法
      * @param {Number} aimX
@@ -266,7 +290,7 @@ class TankAi {
      */
     findPath(startX, satrtY, aimX, aimY) {
         //深拷贝一份地图对象
-        let copyMap = this.aiMap.deepClone();
+        let copyMap = this.copyMapWithEntity();
 
         let aim = copyMap.get(aimX, aimY);
         let start = copyMap.get(startX, satrtY);

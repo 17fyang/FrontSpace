@@ -20,6 +20,8 @@ class EntityServiceClass {
         if (idx >= 0) {
             this.entityList.splice(idx, 1);
         }
+
+        eventHandler.removeAllListener(entity.uuid);
     }
 }
 
