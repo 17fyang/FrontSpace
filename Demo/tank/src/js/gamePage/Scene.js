@@ -5,7 +5,6 @@ class SceneItem {
         this.y = y;
         this.width = width == undefined ? PIXEL_NUM : width; //一个元素单位的宽默认是一个地图格子
         this.height = height == undefined ? PIXEL_NUM : height; //一个元素单位的高默认是一个地图格子
-        this.tickStatus = { collision: undefined, disappear: undefined }; //tick上下文：保存每个tick的状态
     }
 
     static valueOfByType(type, x, y, width, height) {
@@ -29,9 +28,8 @@ class SceneItem {
 
     /**
      *  碰撞箱
-     * @param {Aryay} collision
      */
-    collision(collision) {
+    collision() {
         let canvas = MapUtil.sceneToCanvas({ x: this.x, y: this.y });
         return [canvas.x, canvas.y, this.width, this.height];
     }
@@ -42,9 +40,8 @@ class SceneItem {
 class Air extends SceneItem {
     /**
      *  空气碰撞箱
-     * @param {Aryay} collision
      */
-    collision(collision) {
+    collision() {
         return NONE_COLLISION;
     }
 
@@ -94,13 +91,6 @@ class Brick extends SceneItem {
                 this.height - 2 * border
             );
         }
-    }
-
-    /**
-     *重置tick上下文对象
-     */
-    resettickStatus() {
-        this.tickStatus = { collision: this.collision(), disappear: false };
     }
 }
 
@@ -162,6 +152,10 @@ class Scene {
             //处理该实体tick
             entity.tick();
 
+            if (entity instanceof AiTank) {
+                entity.ai.tick();
+            }
+
             //计算场景中实体和边界碰撞情况
             for (let border of this.borderList) {
                 if (Util.collideCheck(border, entity.tickStatus.collision)) {
@@ -171,8 +165,8 @@ class Scene {
             }
 
             //计算场景中的实体和静态元素碰撞情况
-            for (let item of sceneService.sceneItemList) {
-                if (Util.collideCheck(entity.tickStatus.collision, item.tickStatus.collision)) {
+            for (let item of Util.copyArray(sceneService.sceneItemList)) {
+                if (Util.collideCheck(entity.tickStatus.collision, item.collision())) {
                     let event = new ItemCollideEvent(entity, item);
                     eventHandler.handle(event);
                 }
@@ -187,26 +181,13 @@ class Scene {
                     eventHandler.handle(event);
                 }
             }
-        }
 
-        //ai tick
-        for (let tankAi of aiSercice.aiList) {
-            tankAi.tick();
-        }
-
-        //处理实体状态生效
-        for (let entity of Util.copyArray(entityService.entityList)) {
+            //更新实体当前状态
             if (entity.tickStatus.disappear) {
                 entityService.removeEntity(entity);
             }
             if (entity.tickStatus.allowMove) {
                 entity.move(entity.tickStatus.collision[0], entity.tickStatus.collision[1]);
-            }
-        }
-        //处理静态元素状态生效
-        for (let item of Util.copyArray(sceneService.sceneItemList)) {
-            if (item.tickStatus.disappear) {
-                sceneService.removeSceneItem(item);
             }
         }
     }

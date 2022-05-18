@@ -16,7 +16,7 @@ class Position {
      * @param {float} spped
      * @returns
      */
-    tryMove(spped) {
+    nextTick(spped) {
         //如果不在移动状态，则位置不变
         if (!this.moving) {
             return [this.x, this.y];
@@ -82,7 +82,7 @@ class Entity {
      */
     resettickStatus() {
         this.tickStatus = {
-            collision: this.tryMove(),
+            collision: this.nextTick(),
             allowMove: true,
             disappear: false,
         };
@@ -109,7 +109,7 @@ class Entity {
      * 尝试移动，返回尝试移动后的碰撞箱[x,y,width,height]
      * @returns
      */
-    tryMove() {}
+    nextTick() {}
     /**
      * 移动实体
      * @returns
@@ -177,7 +177,7 @@ class Bullet extends Entity {
             this.tickStatus.disappear = true;
             let bulletDirect = this.position.direct;
             for (let affectItem of this.relocateItem(event.item.x, event.item.y, bulletDirect)) {
-                affectItem.tickStatus.disappear = true;
+                sceneService.removeSceneItem(affectItem);
             }
         }
     }
@@ -219,8 +219,8 @@ class Bullet extends Entity {
      * 尝试移动，返回尝试移动后的碰撞箱[x,y,width,height]
      * @returns
      */
-    tryMove() {
-        let location = this.position.tryMove(this.speed);
+    nextTick() {
+        let location = this.position.nextTick(this.speed);
         return [location[0], location[1], this.width, this.height];
     }
 
@@ -317,8 +317,8 @@ class Tank extends Entity {
      * 尝试移动，返回尝试移动后的碰撞箱[x,y,width,height]
      * @returns
      */
-    tryMove() {
-        let location = this.position.tryMove(this.speed);
+    nextTick() {
+        let location = this.position.nextTick(this.speed);
         return [location[0], location[1], this.width, this.height];
     }
     /**
@@ -328,6 +328,7 @@ class Tank extends Entity {
     move(x, y) {
         this.position.locate(x, y);
     }
+
     /**
      * 控制移动
      * @param {*} direct
@@ -365,7 +366,8 @@ class Tank extends Entity {
      */
     fixFullLocation() {
         let fixNow = MapUtil.sceneToCanvas(MapUtil.canvasToScene(this.position.location()));
-        if (fixNow.y == this.y && fixNow.x == this.x) {
+
+        if (fixNow.x == this.position.x && fixNow.y == this.position.y) {
             //不需要修正
             return false;
         } else {
@@ -452,8 +454,8 @@ class AiTank extends Tank {
                 this.tickContext.entityCollideTime = 0;
             }
 
-            //连续10个tick都会碰到坦克，说明卡住了，发送事件
-            if (this.tickContext.entityCollideTime >= 10) {
+            //连续30个tick都会碰到坦克，说明卡住了，发送事件
+            if (this.tickContext.entityCollideTime >= 30) {
                 eventHandler.handle(new AiBlockEvent(this));
             }
             this.tickContext.lastEntityCollideTick = tickService.nowTick;
