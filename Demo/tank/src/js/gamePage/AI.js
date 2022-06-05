@@ -293,18 +293,20 @@ class TankAi {
             let min = openList.shift();
             closeList.push(min);
 
-            //遍历周围可达的格子
-            let reachableGrids = copyMap.arroundGrid(min.x, min.y);
-            for (let grid of reachableGrids) {
-                //该格子没走过时初始化，并加入到openList
-                if (closeList.indexOf(grid) == -1 && openList.indexOf(grid) == -1) {
-                    grid.resetContext(start, aim, min);
-                    openList.push(grid);
-                }
-
+            if (min == aim) {
                 //找到目的地了，记录路径并返回
-                if (grid == aim) {
-                    return grid.traceParent().reverse();
+                return min.traceParent().reverse();
+            } else {
+                //遍历周围可达的格子
+                let reachableGrids = copyMap.arroundGrid(min.x, min.y);
+                for (let grid of reachableGrids) {
+                    if (closeList.indexOf(grid) != -1) {
+                        continue;
+                    } else if (openList.indexOf(grid) == -1) {
+                        //该格子没走过时初始化，并加入到openList
+                        grid.resetContext(start, aim, min);
+                        openList.push(grid);
+                    }
                 }
             }
         }
